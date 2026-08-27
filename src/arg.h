@@ -16,6 +16,17 @@ typedef struct {
 
 } arg_t;
 
+// list of arg_ts with how much memory was allocated
+// finding the number of usable slots in the array would
+// be with dividing the alloc_sz with sizeof(arg_t)
+typedef struct {
+    // alloc count
+    size_t      asz;
+    // item count
+    size_t     icnt;
+    arg_t      *ptr;
+} arg_arr_t;
+
 // make a new arg, going to the nearest whitespace
 arg_t goto_whitespace(const arg_t arg);
 
@@ -32,5 +43,15 @@ int alloc_arg(arg_t *arg, const size_t sz);
 // see if an arg is empty
 // return 1 on yes
 int arg_empty(arg_t arg);
+
+// (re)allocate a arg_t pointer for a list
+int alloc_arg_arr(arg_arr_t *arr, size_t sz);
+
+// compare two args
+// same logic as strcmp
+int arg_cmp(const arg_t one, const arg_t two);
+
+// make an arg from just a string
+arg_t make_arg(const char *str);
 
 #endif

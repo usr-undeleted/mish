@@ -4,6 +4,8 @@
 
 #include "arg.h"
 
+#define MAX(x, y) x > y ? x : y
+
 // make a new arg, going to the nearest whitespace
 arg_t goto_whitespace(const arg_t arg) {
 	arg_t ret = arg;
@@ -74,4 +76,42 @@ int arg_empty(arg_t arg) {
 	}
 
 	return 1;
+}
+#include <stdio.h>
+// (re)allocate a arg_t pointer for a list
+int alloc_arg_arr(arg_arr_t *arr, size_t sz) {
+    if (!arr) {
+        arr = calloc(sizeof(arg_t), sz);
+        if (!arr) return 1;
+
+    } else {
+        arr->ptr = realloc(arr->ptr, arr->asz + sz);
+        if (!arr->ptr) return 1;
+        arr->asz += sz;
+    }
+
+    return 0;
+}
+
+// compare two args
+// same logic as strcmp
+int arg_cmp(const arg_t one, const arg_t two) {
+    if (one.len != two.len) return 1;
+
+    if (strncmp(one.ptr, two.ptr, MAX(one.len, two.len))) return 1;
+
+    return 0;
+}
+
+// make an arg from just a string
+arg_t make_arg(const char *str) {
+    size_t len = strlen(str);
+
+    arg_t ret = {
+        .ptr = (char *)str,
+        .len = len,
+        .asz = 0,
+    };
+
+    return ret;
 }

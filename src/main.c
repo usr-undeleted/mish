@@ -10,6 +10,9 @@
 #include "arg.h"
 #include "path.h"
 
+// takes in a char to see if its either '/', '.', or '~', aka a path
+#define IS_A_PATH(c) (c == '/' ? 1 : c == '.' ? 1 : c == '~' ? 1 : 0)
+
 // form an arg, allocating memory automatically
 int parse_arg(arg_t *dest, arg_t src) {
 	size_t src_i  = 0;
@@ -66,6 +69,10 @@ void restore_term(void) {
 
 int main(int argc, char *argv[], char *envp[]) {
 	(void)argc;(void)argv;(void)envp;
+
+	// make $PATH
+	refresh_path();
+
 	/*
 	// switch term options
 	// get original options
@@ -130,6 +137,15 @@ int main(int argc, char *argv[], char *envp[]) {
 			passed_argv[i] = child_argv[i].ptr;
 		}
 
+		char *bin_path = fetch_from_path(child_argv[0]);
+
+		if (!bin_path && !IS_A_PATH(*child_argv[0].ptr)) {
+		    fprintf(stderr, "%s: couldn't execute \"%s\": unknown binary\n",
+				basename(argv[0]), passed_argv[0]);
+			fflush(stderr);
+		    goto end_loop;
+		}
+
 		pid_t child = fork();
 
 		switch (child) {
@@ -139,7 +155,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			}
 
 			case 0: {
-				execve(passed_argv[0], passed_argv, envp);
+				execve(bin_path, passed_argv, envp);
 				fprintf(stderr, "%s: couldn't execute \"%s\": %s\n",
 					basename(argv[0]), passed_argv[0], strerror(errno));
 				fflush(stderr);
@@ -154,11 +170,14 @@ int main(int argc, char *argv[], char *envp[]) {
 			}
 		}
 
-		// free-em
-		for (size_t i = 0; i < ARGV_CNT; i++) {
-			if (!child_argv[i].ptr || !child_argv[i].asz) break;
+		end_loop: {
+            // free-em
+		    for (size_t i = 0; i < ARGV_CNT; i++) {
+			    if (!child_argv[i].ptr || !child_argv[i].asz) break;
 
-			free(child_argv[i].ptr);
+			    free(child_argv[i].ptr);
+		    }
+			continue;
 		}
 	}
 
