@@ -4,10 +4,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <libgen.h>
 
 #include "arg.h"
+#include "keyword.h"
 #include "path.h"
 
 // takes in a char to see if its either '/', '.', or '~', aka a path
@@ -98,9 +100,19 @@ int main(int argc, char *argv[], char *envp[]) {
 	sleep(1);
 	return 0;
 	*/
+
+	int status = 0;
+
 	// main loop
 	while (1) {
-		printf("> ");
+		if (status) {
+			printf("(%d)> ", status % 255);
+		} else {
+			printf("> ");
+		}
+
+		status = 0;
+
 		fflush(stdout);
 
 		arg_t input = {0};
@@ -114,7 +126,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 		arg_t child_argv[ARGV_CNT] = {0};
 		arg_t                 work = input;
-		int             child_argc = 0;
+		int			    child_argc = 0;
 
 		while (work.len && child_argc < ARGV_CNT) {
 			work = skip_whitespace(work);
@@ -137,14 +149,26 @@ int main(int argc, char *argv[], char *envp[]) {
 			passed_argv[i] = child_argv[i].ptr;
 		}
 
-		char *bin_path = fetch_from_path(child_argv[0]);
+		// try keywords
+		int key = find_keyword(passed_argv[0]);
+		if (key != NOT_A_KEYWORD) {
+			switch (key) {
+				case EXIT_KEYWORD_N: {
+					exit_keyword();
+					break;
+				}
 
-		if (!bin_path && !IS_A_PATH(*child_argv[0].ptr)) {
-		    fprintf(stderr, "%s: couldn't execute \"%s\": unknown binary\n",
-				basename(argv[0]), passed_argv[0]);
-			fflush(stderr);
-		    goto end_loop;
+				case WHICH_KEYWORD_N: {
+					which_keyword(child_argc, (const char **)passed_argv);
+					break;
+				}
+			}
+
+			goto end_looṕ;
 		}
+
+		char *bin_path = fetch_from_path(child_argv[0]);
+		if (!bin_path) bin_path = passed_argv[0];
 
 		pid_t child = fork();
 
@@ -156,28 +180,28 @@ int main(int argc, char *argv[], char *envp[]) {
 
 			case 0: {
 				execve(bin_path, passed_argv, envp);
+
 				fprintf(stderr, "%s: couldn't execute \"%s\": %s\n",
-					basename(argv[0]), passed_argv[0], strerror(errno));
-				fflush(stderr);
+				basename(argv[0]), bin_path, strerror(errno));
+	   			fflush(stderr);
 				return 0;
+
 				break;
 			}
 
 			default: {
-				int status;
-				waitpid(child, &status, 0);
+				while (waitpid(child, &status, WNOHANG) != -1) {};
 				break;
 			}
 		}
 
-		end_loop: {
-            // free-em
-		    for (size_t i = 0; i < ARGV_CNT; i++) {
-			    if (!child_argv[i].ptr || !child_argv[i].asz) break;
+		end_looṕ: {
+			// free-em
+			for (size_t i = 0; i < ARGV_CNT; i++) {
+				if (!child_argv[i].ptr || !child_argv[i].asz) break;
 
-			    free(child_argv[i].ptr);
-		    }
-			continue;
+				free(child_argv[i].ptr);
+			}
 		}
 	}
 
