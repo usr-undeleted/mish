@@ -167,6 +167,16 @@ int main(int argc, char *argv[], char *envp[]) {
 					echo_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
+
+				case CD_KEYWORD_N: {
+					cd_keyword(child_argc, (const char **)passed_argv);
+					break;
+				}
+
+				case PWD_KEYWORD_N: {
+					pwd_keyword();
+					break;
+				}
 			}
 
 			goto end_loop;

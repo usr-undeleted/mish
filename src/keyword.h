@@ -12,6 +12,10 @@ void which_keyword(const int argc, const char *argv[]);
 
 void echo_keyword(const int argc, const char *argv[]);
 
+void cd_keyword(const int argc, const char *argv[]);
+
+void pwd_keyword(void);
+
 #define NOT_A_KEYWORD 0
 
 #define EXIT_KEYWORD_S "exit"
@@ -22,5 +26,12 @@ void echo_keyword(const int argc, const char *argv[]);
 
 #define ECHO_KEYWORD_S "echo"
 #define ECHO_KEYWORD_N 3
+
+#define CD_KEYWORD_S "cd"
+#define CD_KEYWORD_N 4
+
+#define PWD_KEYWORD_S "pwd"
+#define PWD_KEYWORD_N 5
+
 
 #endif
