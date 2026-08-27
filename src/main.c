@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <termios.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -169,11 +170,21 @@ int main(int argc, char *argv[], char *envp[]) {
 				}
 			}
 
-			goto end_looṕ;
+			goto end_loop;
 		}
 
 		char *bin_path = fetch_from_path(child_argv[0]);
-		if (!bin_path) bin_path = passed_argv[0];
+		if (!bin_path) {
+			if (!IS_A_PATH(*child_argv[0].ptr)) {
+				fprintf(stderr, "%s: couldn't execute \"%s\": Unknown binary\n",
+					basename(argv[0]), child_argv[0].ptr);
+				fflush(stderr);
+				goto end_loop;
+
+			} else {
+				bin_path = passed_argv[0];
+			}
+		}
 
 		pid_t child = fork();
 
@@ -187,7 +198,7 @@ int main(int argc, char *argv[], char *envp[]) {
 				execve(bin_path, passed_argv, envp);
 
 				fprintf(stderr, "%s: couldn't execute \"%s\": %s\n",
-				basename(argv[0]), bin_path, strerror(errno));
+					basename(argv[0]), bin_path, strerror(errno));
 	   			fflush(stderr);
 				return 0;
 
@@ -200,7 +211,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			}
 		}
 
-		end_looṕ: {
+		end_loop: {
 			// free-em
 			for (size_t i = 0; i < ARGV_CNT; i++) {
 				if (!child_argv[i].ptr || !child_argv[i].asz) break;
