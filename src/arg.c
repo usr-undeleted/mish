@@ -115,3 +115,8 @@ arg_t make_arg(const char *str) {
 
     return ret;
 }
+
+void free_arg(arg_t *arg) {
+	if (arg->asz) free(arg->ptr);
+	memset(arg, '\0', sizeof(arg_t));
+}

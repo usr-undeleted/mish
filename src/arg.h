@@ -54,4 +54,8 @@ int arg_cmp(const arg_t one, const arg_t two);
 // make an arg from just a string
 arg_t make_arg(const char *str);
 
+// free an arg's memory (if its allocated)
+// otherwise, just zero out memory
+void free_arg(arg_t *arg);
+
 #endif

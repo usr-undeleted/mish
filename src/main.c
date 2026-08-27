@@ -213,11 +213,13 @@ int main(int argc, char *argv[], char *envp[]) {
 		end_loop: {
 			// free-em
 			for (size_t i = 0; i < ARGV_CNT; i++) {
-				if (!child_argv[i].ptr || !child_argv[i].asz) break;
-
-				free(child_argv[i].ptr);
+				free_arg(&child_argv[i]);
 			}
 		}
+
+		free_arg(&input);
+
+		if (!isatty(STDIN_FILENO)) break;
 	}
 
 	free_path();
