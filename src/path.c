@@ -26,7 +26,7 @@ void clear_list(void) {
 }
 
 // free the memory from the list
-void free_list(void) {
+void free_path(void) {
     for (size_t i = 0; i < known_paths.icnt; i++) {
         if (!known_paths.ptr[i].ptr) continue;
         free(known_paths.ptr[i].ptr);

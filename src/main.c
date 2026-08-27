@@ -181,6 +181,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 	}
 
+	free_path();
 
 	return 0;
 }

@@ -9,4 +9,7 @@ void refresh_path(void);
 // get a binary path from a binary name
 char *fetch_from_path(const arg_t bin);
 
+// free the memory from the list
+void free_path(void);
+
 #endif
