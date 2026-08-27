@@ -121,7 +121,6 @@ int main(int argc, char *argv[], char *envp[]) {
 
 		if (arg_empty(input)) {
 			free(input.ptr);
-			putchar('\n');
 			continue;
 		}
 
