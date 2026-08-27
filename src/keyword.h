@@ -10,6 +10,8 @@ void exit_keyword(void);
 
 void which_keyword(const int argc, const char *argv[]);
 
+void echo_keyword(const int argc, const char *argv[]);
+
 #define NOT_A_KEYWORD 0
 
 #define EXIT_KEYWORD_S "exit"
@@ -17,5 +19,8 @@ void which_keyword(const int argc, const char *argv[]);
 
 #define WHICH_KEYWORD_S "which"
 #define WHICH_KEYWORD_N 2
+
+#define ECHO_KEYWORD_S "echo"
+#define ECHO_KEYWORD_N 3
 
 #endif

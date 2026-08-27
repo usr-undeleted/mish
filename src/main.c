@@ -162,6 +162,11 @@ int main(int argc, char *argv[], char *envp[]) {
 					which_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
+
+				case ECHO_KEYWORD_N: {
+					echo_keyword(child_argc, (const char **)passed_argv);
+					break;
+				}
 			}
 
 			goto end_looṕ;

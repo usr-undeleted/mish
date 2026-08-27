@@ -17,6 +17,9 @@ int find_keyword(const char *str) {
     } else if (!strcmp(str, WHICH_KEYWORD_S)) {
     	return WHICH_KEYWORD_N;
 
+    } else if (!strcmp(str, ECHO_KEYWORD_S)) {
+    	return ECHO_KEYWORD_N;
+
     } else {
         return NOT_A_KEYWORD;
     }
@@ -50,6 +53,21 @@ void which_keyword(const int argc, const char **argv) {
 
 		}
 	}
+
+	fflush(stdout);
+}
+
+void echo_keyword(const int argc, const char **argv) {
+	int i = 1;
+	while (i < argc) {
+		printf("%s", argv[i]);
+
+		i++;
+
+		if (i < argc) putchar(' ');
+	}
+
+	putchar('\n');
 
 	fflush(stdout);
 }
