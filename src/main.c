@@ -193,9 +193,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 	return 0;
 }
 
-#define ARGV_CNT 1024
-
-#define USER_ASZ 256
+#define ARGV_ARR_ASZ 8
 
 // edits an arg_t with content from fd, allocating memory automatically
 // reads until a newline
@@ -252,8 +250,9 @@ int main(int argc, char *argv[], char *envp[]) {
 		return 1;
 	}
 
-	int status  = 0;
-	arg_t input = {0};
+	int           status = 0;
+	arg_t          input = {0};
+	arg_arr_t child_argv = {0};
 
 	// main loop
 	while (1) {
@@ -279,23 +278,27 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 
 		arg_t             work = input;
-		arg_t child_argv[1024] = {0};
 		int			child_argc = 0;
 
-		while (work.len && child_argc < ARGV_CNT) {
+		while (work.len) {
+			if ((size_t)(child_argc + 1) >= (child_argv.asz / sizeof(arg_t))) {
+				if (alloc_arg_arr(&child_argv, ARGV_ARR_ASZ) != 0) return 1;
+			}
+
 			work = skip_whitespace(work);
 			if (arg_empty(work)) break;
 
 			// limits size to whitespace
 			arg_t cmd_arg = cap_to_white(work);
 
-			if (parse_arg(&child_argv[child_argc], cmd_arg) != 0) return 1;
+			if (parse_arg(&child_argv.ptr[child_argc], cmd_arg) != 0) return 1;
 
 			// end early if the arg is empty
-			if (arg_empty(child_argv[child_argc]) || EMPTY_C(*child_argv[child_argc].ptr)) {
-				free_arg(&child_argv[child_argc]);
-				child_argv[child_argc].ptr = NULL;
-				break;
+			if (arg_empty(child_argv.ptr[child_argc]) ||
+				EMPTY_C(*child_argv.ptr[child_argc].ptr)) {
+
+					free_arg(&child_argv.ptr[child_argc]);
+					break;
 			}
 
 			child_argc++;
@@ -303,11 +306,12 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 
 		// turn into regular argv
-		char *passed_argv[child_argc + 1];
-		memset(passed_argv, '\0', sizeof(passed_argv));
+		char **passed_argv = calloc(sizeof(passed_argv[0]), child_argc + 1);
+		if (!passed_argv) return 1;
+		memset(passed_argv, '\0', sizeof(passed_argv[0]) * (child_argc + 1));
 
 		for (int i = 0; i < child_argc; i++) {
-			passed_argv[i] = child_argv[i].ptr;
+			passed_argv[i] = child_argv.ptr[i].ptr;
 		}
 
 		// try keywords
@@ -348,11 +352,11 @@ int main(int argc, char *argv[], char *envp[]) {
 			goto end_loop;
 		}
 
-		char *bin_path = fetch_from_path(child_argv[0]);
+		char *bin_path = fetch_from_path(child_argv.ptr[0]);
 		if (!bin_path) {
-			if (!IS_A_PATH(*child_argv[0].ptr)) {
+			if (!IS_A_PATH(*child_argv.ptr[0].ptr)) {
 				fprintf(stderr, "%s: couldn't execute \"%s\": Unknown binary\n",
-					basename(argv[0]), child_argv[0].ptr);
+					basename(argv[0]), child_argv.ptr[0].ptr);
 				fflush(stderr);
 				goto end_loop;
 
@@ -387,16 +391,13 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 
 		end_loop: {
-			// get the loop ready
-			for (size_t i = 0; i < (size_t)child_argc; i++) {
-				free_arg(&child_argv[i]);
-			}
-
+			zero_arg_arr(&child_argv);
 			zero_arg(&input);
 			if (!isatty(STDIN_FILENO)) break;
 		}
 	}
 
+	free_arg_arr(&child_argv);
 	free_arg(&input);
 	free_path();
 

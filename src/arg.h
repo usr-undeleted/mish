@@ -61,6 +61,10 @@ void free_arg(arg_t *arg);
 // doesn't free, only zeroes out memory
 void zero_arg(arg_t *arg);
 
+// same logic as zero_arg
+// also sets icnt to 0
+void zero_arg_arr(arg_arr_t *arr);
+
 // free every item on array
 void free_arg_arr(arg_arr_t *arr);
 

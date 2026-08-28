@@ -92,10 +92,11 @@ int arg_empty(arg_t arg) {
 }
 
 // (re)allocate a arg_t pointer for a list
+// multiplies sz by sizeof(arg_t)
 int alloc_arg_arr(arg_arr_t *arr, size_t sz) {
 	if (!arr) return 1;
 
-	arr->ptr = realloc(arr->ptr, arr->asz + sz);
+	arr->ptr = realloc(arr->ptr, (arr->asz + sz) * sizeof(arg_t));
     if (!arr->ptr) return 1;
     arr->asz += sz;
 
@@ -134,6 +135,15 @@ void free_arg(arg_t *arg) {
 void zero_arg(arg_t *arg) {
 	if (arg->ptr) memset(arg->ptr, '\0', arg->asz);
 	arg->len = 0;
+}
+
+// same logic as zero_arg
+// also sets icnt to 0
+void zero_arg_arr(arg_arr_t *arr) {
+	for (size_t i = 0; i < arr->icnt; i++) {
+		zero_arg(&arr->ptr[i]);
+	}
+	arr->icnt = 0;
 }
 
 // free every item on array
