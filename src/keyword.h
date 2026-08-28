@@ -18,6 +18,10 @@ void pwd_keyword(void);
 
 void env_keyword(const char **envp);
 
+void export_keyword(const int argc, const char *argv[]);
+
+void unset_keyword(const int argc, const char *argv[]);
+
 #define NOT_A_KEYWORD 0
 
 #define EXIT_KEYWORD_S "exit"
@@ -37,5 +41,11 @@ void env_keyword(const char **envp);
 
 #define ENV_KEYWORD_S "env"
 #define ENV_KEYWORD_N 6
+
+#define EXPORT_KEYWORD_S "export"
+#define EXPORT_KEYWORD_N 7
+
+#define UNSET_KEYWORD_S "unset"
+#define UNSET_KEYWORD_N 8
 
 #endif

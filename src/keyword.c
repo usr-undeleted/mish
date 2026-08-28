@@ -31,6 +31,12 @@ int find_keyword(const char *str) {
     } else if (!strcmp(str, ENV_KEYWORD_S)) {
     	return ENV_KEYWORD_N;
 
+    } else if (!strcmp(str, EXPORT_KEYWORD_S)) {
+    	return EXPORT_KEYWORD_N;
+
+    } else if (!strcmp(str, UNSET_KEYWORD_S)) {
+    	return UNSET_KEYWORD_N;
+
     } else {
         return NOT_A_KEYWORD;
     }
@@ -40,7 +46,7 @@ void exit_keyword(void) {
     exit(0);
 }
 
-void which_keyword(const int argc, const char **argv) {
+void which_keyword(const int argc, const char *argv[]) {
 	if (argc < 2) {
 		fprintf(stderr, "%s: too little arguments.\n", WHICH_KEYWORD_S);
 		fflush(stderr);
@@ -68,7 +74,7 @@ void which_keyword(const int argc, const char **argv) {
 	fflush(stdout);
 }
 
-void echo_keyword(const int argc, const char **argv) {
+void echo_keyword(const int argc, const char *argv[]) {
 	int i = 1;
 	while (i < argc) {
 		printf("%s", argv[i]);
@@ -83,7 +89,7 @@ void echo_keyword(const int argc, const char **argv) {
 	fflush(stdout);
 }
 
-void cd_keyword(const int argc, const char **argv) {
+void cd_keyword(const int argc, const char *argv[]) {
 	if (argc < 2) {
 		// no args leads directly to home
 		char *home = getenv("HOME");
@@ -119,10 +125,52 @@ void pwd_keyword(void) {
 	fflush(stdout);
 }
 
-void env_keyword(const char **envp) {
+void env_keyword(const char *envp[]) {
 	while (*envp) {
 		printf("%s\n", *envp);
 		envp++;
 	}
 	fflush(stdout);
+}
+
+void export_keyword(const int argc, const char *argv[]) {
+	if (argc < 2) {
+		fprintf(stderr, "%s: too little arguments.\n", EXPORT_KEYWORD_S);
+		fflush(stderr);
+		return;
+	}
+
+	for (int i = 1; i < argc; i++) {
+		char *eq = strchr(argv[i], '=');
+		if (eq) *eq = '\0';
+
+		if (setenv(argv[i], eq ? eq + 1 : "", true) != 0) {
+			fprintf(stderr, "%s: failed to set environment variable \"%s\": %s\n",
+				EXPORT_KEYWORD_S, argv[i], strerror(errno));
+			continue;
+		}
+
+		if (eq) *eq = '=';
+	}
+
+	fflush(stderr);
+}
+
+void unset_keyword(const int argc, const char *argv[]) {
+	if (argc < 2) {
+		fprintf(stderr, "%s: too little arguments.\n", UNSET_KEYWORD_S);
+		fflush(stderr);
+		return;
+	}
+
+	for (int i = 1; i < argc; i++) {
+		fprintf(stderr, "");
+		if (unsetenv(argv[i]) != 0) {
+			fprintf(stderr, "%s: failed to unset environment variable \"%s\": %s\n",
+				EXPORT_KEYWORD_S, argv[i], strerror(errno));
+			continue;
+		}
+	}
+
+	fflush(stderr);
 }

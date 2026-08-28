@@ -98,7 +98,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 						*close = '\0';
 
 						// make sure to skip everything from the source
-						src_i += strlen(start) + 1;
+						src_i += strlen(start) + 2;
 						char *env = getenv(start);
 						if (!env) {
 							break;
@@ -114,7 +114,6 @@ int parse_arg(arg_t *dest, arg_t src) {
 						dest->len += snprintf(dest->ptr + dest->len,
 							dest->asz - dest->len,
 							"%s", env);
-
 						*close = ')';
 
 						break;
@@ -229,6 +228,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	// make $PATH
 	refresh_path();
 
+	/*
 	// switch term options
 	// get original options
 	if (tcgetattr(STDIN_FILENO, &original_term) != 0) {
@@ -249,6 +249,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			basename(argv[0]), strerror(errno));
 		return 1;
 	}
+	*/
 
 	int           status = 0;
 	arg_t          input = {0};
@@ -345,6 +346,16 @@ int main(int argc, char *argv[], char *envp[]) {
 
 				case ENV_KEYWORD_N: {
 					env_keyword((const char **)envp);
+					break;
+				}
+
+				case EXPORT_KEYWORD_N: {
+					export_keyword(child_argc, (const char **)passed_argv);
+					break;
+				}
+
+				case UNSET_KEYWORD_N: {
+					unset_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
 			}
