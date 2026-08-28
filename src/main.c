@@ -14,9 +14,6 @@
 #include "keyword.h"
 #include "path.h"
 
-// takes in a char to see if its either '/', '.', or '~', aka a path
-#define IS_A_PATH(c) (c == '/' ? 1 : c == '.' ? 1 : c == '~' ? 1 : 0)
-
 #define NO_QUOTES 0
 #define QUOTE_DBL 1
 #define QUOTE_SIN 2
@@ -25,6 +22,10 @@
 #define QUOTE_T(c) (c == '\"' ? QUOTE_DBL : c == '\'' ? QUOTE_SIN : NO_QUOTES)
 // check if a char is empty
 #define EMPTY_C(c) (isspace(c) ? 1 : iscntrl(c) ? 1 : 0)
+// takes in a char to see if its either '/', '.', or '~', aka a path
+#define IS_A_PATH(c) (c == '/' ? 1 : c == '.' ? 1 : c == '~' ? 1 : 0)
+// get the biggest value
+#define MAX(x, y) (x > y ? x : y)
 
 // find the equivalent closer for the opener
 // returns null on failure to find the closer, or when the
@@ -67,8 +68,6 @@ int parse_arg(arg_t *dest, arg_t src) {
 		}
 
 		switch (src.ptr[src_i]) {
-			printf("%ld: %s\n", src_i, &src.ptr[src_i]);
-
 			// stuff like env vars
 			case '$': {
 				if (quote_type == QUOTE_SIN) goto copy_memory;
@@ -107,13 +106,14 @@ int parse_arg(arg_t *dest, arg_t src) {
 
 						// append to dest
 						// increase size if needed
-						if ((dest->len + strlen(env)) >= dest->asz) {
-							if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
+						size_t env_len = strlen(env);
+						if ((dest->len + env_len) >= dest->asz) {
+							if (alloc_arg(dest, MAX(env_len, ARGV_ASZ)) != 0) return 1;
 						}
 
 						dest->len += snprintf(dest->ptr + dest->len,
 							dest->asz - dest->len,
-							"%s", env) + 1;
+							"%s", env);
 
 						*close = ')';
 
@@ -137,19 +137,20 @@ int parse_arg(arg_t *dest, arg_t src) {
 					char *env = getenv("HOME");
 					if (!env) goto copy_memory;
 
-					if ((dest->len + strlen(env)) >= dest->asz) {
-						if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
+					size_t env_len = strlen(env);
+					if ((dest->len + env_len) >= dest->asz) {
+						if (alloc_arg(dest, MAX(env_len, ARGV_ASZ)) != 0) return 1;
 					}
 
 					dest->len += snprintf(dest->ptr + dest->len,
 						dest->asz - dest->len,
-						"%s", env) + 1;
+						"%.*s", (int)env_len, env);
 
 					++src_i;
 
 				} else goto copy_memory;
 
-				break;
+				continue;
 			}
 
 			default: {
@@ -182,6 +183,12 @@ int parse_arg(arg_t *dest, arg_t src) {
 			dest->ptr[dest->len++] = src.ptr[src_i++];
 		}
 	}
+
+	//null term
+	if (dest->len > dest->asz) {
+		if (alloc_arg(dest, 1) != 0) return 1;
+	}
+	dest->ptr[dest->len] = '\0';
 
 	return 0;
 }
