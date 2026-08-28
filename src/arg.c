@@ -80,12 +80,12 @@ int alloc_arg(arg_t *arg, const size_t sz) {
 
 	return 0;
 }
-
+#include <stdio.h>
 // see if an arg is empty
 // return 1 on yes
 int arg_empty(arg_t arg) {
 	for (size_t i = 0; i < arg.len; i++) {
-		if (!isspace(arg.ptr[i])) return 0;
+		if (!isspace(arg.ptr[i]) || !arg.ptr[i]) return 0;
 	}
 
 	return 1;
@@ -93,15 +93,11 @@ int arg_empty(arg_t arg) {
 #include <stdio.h>
 // (re)allocate a arg_t pointer for a list
 int alloc_arg_arr(arg_arr_t *arr, size_t sz) {
-    if (!arr) {
-        arr = calloc(sizeof(arg_t), sz);
-        if (!arr) return 1;
+	if (!arr) return 1;
 
-    } else {
-        arr->ptr = realloc(arr->ptr, arr->asz + sz);
-        if (!arr->ptr) return 1;
-        arr->asz += sz;
-    }
+	arr->ptr = realloc(arr->ptr, arr->asz + sz);
+    if (!arr->ptr) return 1;
+    arr->asz += sz;
 
     return 0;
 }
@@ -132,4 +128,19 @@ arg_t make_arg(const char *str) {
 void free_arg(arg_t *arg) {
 	if (arg->asz) free(arg->ptr);
 	memset(arg, '\0', sizeof(arg_t));
+}
+
+// doesn't free, only zeroes out memory
+void zero_arg(arg_t *arg) {
+	if (arg->ptr) memset(arg->ptr, '\0', arg->asz);
+	arg->len = 0;
+}
+
+// free every item on array
+void free_arg_arr(arg_arr_t *arr) {
+	for (size_t i = 0; i < arr->icnt; i++) {
+		if (arr->ptr) free(arr->ptr);
+	}
+
+	arr->icnt = 0;
 }

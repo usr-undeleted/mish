@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stddef.h>
 #include <termios.h>
 #include <errno.h>
@@ -20,7 +21,10 @@
 #define QUOTE_DBL 1
 #define QUOTE_SIN 2
 
+// get the quote type of a char
 #define QUOTE_T(c) (c == '\"' ? QUOTE_DBL : c == '\'' ? QUOTE_SIN : NO_QUOTES)
+// check if a char is empty
+#define EMPTY_C(c) (isspace(c) ? 1 : iscntrl(c) ? 1 : 0)
 
 // find the equivalent closer for the opener
 // returns null on failure to find the closer, or when the
@@ -189,17 +193,16 @@ int parse_arg(arg_t *dest, arg_t src) {
 // edits an arg_t with content from fd, allocating memory automatically
 // reads until a newline
 int read_user_input(arg_t *dest, int fd) {
-	if (alloc_arg(dest, USER_ASZ) != 0) return 1;
 	size_t i = 0;
 	char  ch = 0;
 
 	while (read(fd, &ch, 1)) {
-		dest->ptr[i++] = ch;
-		dest->len++;
-
-		if (dest->len > dest->asz) {
+		if ((dest->len + 1) > dest->asz) {
 			if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
 		}
+
+		dest->ptr[i++] = ch;
+		dest->len++;
 
 		if (ch == '\n') break;
 	}
@@ -242,7 +245,8 @@ int main(int argc, char *argv[], char *envp[]) {
 		return 1;
 	}
 
-	int status = 0;
+	int status  = 0;
+	arg_t input = {0};
 
 	// main loop
 	while (1) {
@@ -256,17 +260,20 @@ int main(int argc, char *argv[], char *envp[]) {
 
 		fflush(stdout);
 
-		arg_t input = {0};
 		if (read_user_input(&input, STDIN_FILENO)) return 1;
 
 		if (arg_empty(input)) {
-			free(input.ptr);
+			// put newline if needed
+			if (!input.ptr) putchar('\n');
+			else if (!strchr(input.ptr, '\n')) putchar('\n');
+
+			zero_arg(&input);
 			continue;
 		}
 
-		arg_t child_argv[ARGV_CNT] = {0};
-		arg_t                 work = input;
-		int			    child_argc = 0;
+		arg_t             work = input;
+		arg_t child_argv[1024] = {0};
+		int			child_argc = 0;
 
 		while (work.len && child_argc < ARGV_CNT) {
 			work = skip_whitespace(work);
@@ -276,6 +283,13 @@ int main(int argc, char *argv[], char *envp[]) {
 			arg_t cmd_arg = cap_to_white(work);
 
 			if (parse_arg(&child_argv[child_argc], cmd_arg) != 0) return 1;
+
+			// end early if the arg is empty
+			if (arg_empty(child_argv[child_argc]) || EMPTY_C(*child_argv[child_argc].ptr)) {
+				free_arg(&child_argv[child_argc]);
+				child_argv[child_argc].ptr = NULL;
+				break;
+			}
 
 			child_argc++;
 			work = goto_whitespace(work);
@@ -361,17 +375,17 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 
 		end_loop: {
-			// free-em
-			for (size_t i = 0; i < ARGV_CNT; i++) {
+			// get the loop ready
+			for (size_t i = 0; i < (size_t)child_argc; i++) {
 				free_arg(&child_argv[i]);
 			}
+
+			zero_arg(&input);
+			if (!isatty(STDIN_FILENO)) break;
 		}
-
-		free_arg(&input);
-
-		if (!isatty(STDIN_FILENO)) break;
 	}
 
+	free_arg(&input);
 	free_path();
 
 	return 0;

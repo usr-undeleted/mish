@@ -58,4 +58,10 @@ arg_t make_arg(const char *str);
 // otherwise, just zero out memory
 void free_arg(arg_t *arg);
 
+// doesn't free, only zeroes out memory
+void zero_arg(arg_t *arg);
+
+// free every item on array
+void free_arg_arr(arg_arr_t *arr);
+
 #endif
