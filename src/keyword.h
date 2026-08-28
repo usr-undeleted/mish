@@ -6,23 +6,23 @@
 // relates a string to a keyword
 int find_keyword(const char *str);
 
-void exit_keyword(void);
+int exit_keyword(void);
 
-void which_keyword(const int argc, const char *argv[]);
+int which_keyword(const int argc, const char *argv[]);
 
-void echo_keyword(const int argc, const char *argv[]);
+int echo_keyword(const int argc, const char *argv[]);
 
-void cd_keyword(const int argc, const char *argv[]);
+int cd_keyword(const int argc, const char *argv[]);
 
-void pwd_keyword(void);
+int pwd_keyword(void);
 
-void env_keyword(const char **envp);
+int env_keyword(const char **envp);
 
-void export_keyword(const int argc, const char *argv[]);
+int export_keyword(const int argc, const char *argv[]);
 
-void unset_keyword(const int argc, const char *argv[]);
+int unset_keyword(const int argc, const char *argv[]);
 
-void path_keyword(void);
+int path_keyword(void);
 
 #define NOT_A_KEYWORD 0
 

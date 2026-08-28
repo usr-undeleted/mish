@@ -320,52 +320,53 @@ int main(int argc, char *argv[], char *envp[]) {
 		if (key != NOT_A_KEYWORD) {
 			switch (key) {
 				case EXIT_KEYWORD_N: {
-					exit_keyword();
+					status = exit_keyword();
 					break;
 				}
 
 				case WHICH_KEYWORD_N: {
-					which_keyword(child_argc, (const char **)passed_argv);
+					status = which_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
 
 				case ECHO_KEYWORD_N: {
-					echo_keyword(child_argc, (const char **)passed_argv);
+					status = echo_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
 
 				case CD_KEYWORD_N: {
-					cd_keyword(child_argc, (const char **)passed_argv);
+					status = cd_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
 
 				case PWD_KEYWORD_N: {
-					pwd_keyword();
+					status = pwd_keyword();
 					break;
 				}
 
 				case ENV_KEYWORD_N: {
-					env_keyword((const char **)envp);
+					status = env_keyword((const char **)envp);
 					break;
 				}
 
 				case EXPORT_KEYWORD_N: {
-					export_keyword(child_argc, (const char **)passed_argv);
+					status = export_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
 
 				case UNSET_KEYWORD_N: {
-					unset_keyword(child_argc, (const char **)passed_argv);
+					status = unset_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
 
 				case PATH_KEYWORD_N: {
-					path_keyword();
+					status = path_keyword();
 					break;
 				}
 
 				default: {
-					fprintf(stderr, "%s: unknown keyword %d (internal)\n",
+					status = 127;
+					fprintf(stderr, "%s: unhandled keyword %d (internal).\n",
 						basename(argv[0]), key);
 					fflush(stderr);
 					break;
