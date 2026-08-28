@@ -68,4 +68,8 @@ void zero_arg_arr(arg_arr_t *arr);
 // free every item on array
 void free_arg_arr(arg_arr_t *arr);
 
+// like strdup, but for args
+// returns a new allocated arg
+arg_t dup_arg(const arg_t base);
+
 #endif

@@ -154,3 +154,12 @@ void free_arg_arr(arg_arr_t *arr) {
 
 	arr->icnt = 0;
 }
+
+// like strdup, but for args
+// returns a new allocated arg
+arg_t dup_arg(const arg_t base) {
+	arg_t ret             = base;
+	if (base.ptr) ret.ptr = strdup(base.ptr);
+	ret.asz               = base.len;
+	return ret;
+}
