@@ -80,7 +80,7 @@ int alloc_arg(arg_t *arg, const size_t sz) {
 
 	return 0;
 }
-#include <stdio.h>
+
 // see if an arg is empty
 // return 1 on yes
 int arg_empty(arg_t arg) {
@@ -90,7 +90,7 @@ int arg_empty(arg_t arg) {
 
 	return 1;
 }
-#include <stdio.h>
+
 // (re)allocate a arg_t pointer for a list
 int alloc_arg_arr(arg_arr_t *arr, size_t sz) {
 	if (!arr) return 1;
