@@ -214,6 +214,7 @@ int read_user_input(arg_t *dest, int fd) {
 	return 0;
 }
 
+/*
 // original terminal options
 struct termios original_term = {0};
 
@@ -221,6 +222,7 @@ struct termios original_term = {0};
 void restore_term(void) {
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_term);
 }
+*/
 
 int main(int argc, char *argv[], char *envp[]) {
 	(void)argc;(void)argv;(void)envp;
