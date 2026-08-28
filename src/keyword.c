@@ -37,6 +37,9 @@ int find_keyword(const char *str) {
     } else if (!strcmp(str, UNSET_KEYWORD_S)) {
     	return UNSET_KEYWORD_N;
 
+    } else if (!strcmp(str, PATH_KEYWORD_S)) {
+    	return PATH_KEYWORD_N;
+
     } else {
         return NOT_A_KEYWORD;
     }
@@ -173,4 +176,14 @@ void unset_keyword(const int argc, const char *argv[]) {
 	}
 
 	fflush(stderr);
+}
+
+void path_keyword(void) {
+	size_t i = 0;
+	char *path;
+	while ((path = reveal_path(&i))) {
+		char *f = basename(path);
+		printf("%.*s/\e[1m%s\e[0m\n", (int)(f - path) - 1, path, f);
+	}
+	fflush(stdout);
 }

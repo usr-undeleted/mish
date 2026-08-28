@@ -22,6 +22,8 @@ void export_keyword(const int argc, const char *argv[]);
 
 void unset_keyword(const int argc, const char *argv[]);
 
+void path_keyword(void);
+
 #define NOT_A_KEYWORD 0
 
 #define EXIT_KEYWORD_S "exit"
@@ -47,5 +49,8 @@ void unset_keyword(const int argc, const char *argv[]);
 
 #define UNSET_KEYWORD_S "unset"
 #define UNSET_KEYWORD_N 8
+
+#define PATH_KEYWORD_S "path"
+#define PATH_KEYWORD_N 9
 
 #endif

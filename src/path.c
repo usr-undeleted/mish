@@ -116,3 +116,14 @@ char *fetch_from_path(const arg_t bin) {
 
     return NULL;
 }
+
+// return the contents of the path list from an index, while also
+// editing that same index. returns NULL on end
+char *reveal_path(size_t *i) {
+	if (*i >= known_paths.icnt) {
+		return NULL;
+
+	} else {
+		return known_paths.ptr[(*i)++].ptr;
+	}
+}

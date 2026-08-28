@@ -358,6 +358,18 @@ int main(int argc, char *argv[], char *envp[]) {
 					unset_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
+
+				case PATH_KEYWORD_N: {
+					path_keyword();
+					break;
+				}
+
+				default: {
+					fprintf(stderr, "%s: unknown keyword %d (internal)\n",
+						basename(argv[0]), key);
+					fflush(stderr);
+					break;
+				}
 			}
 
 			goto end_loop;
