@@ -331,6 +331,11 @@ int main(int argc, char *argv[], char *envp[]) {
 					pwd_keyword();
 					break;
 				}
+
+				case ENV_KEYWORD_N: {
+					env_keyword((const char **)envp);
+					break;
+				}
 			}
 
 			goto end_loop;

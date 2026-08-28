@@ -28,6 +28,9 @@ int find_keyword(const char *str) {
     } else if (!strcmp(str, PWD_KEYWORD_S)) {
     	return PWD_KEYWORD_N;
 
+    } else if (!strcmp(str, ENV_KEYWORD_S)) {
+    	return ENV_KEYWORD_N;
+
     } else {
         return NOT_A_KEYWORD;
     }
@@ -113,5 +116,13 @@ void pwd_keyword(void) {
 	char path[PATH_MAX] = {0};
 	getcwd(path, sizeof(path));
 	printf("%.*s\n", (int)sizeof(path), path);
+	fflush(stdout);
+}
+
+void env_keyword(const char **envp) {
+	while (*envp) {
+		printf("%s\n", *envp);
+		envp++;
+	}
 	fflush(stdout);
 }

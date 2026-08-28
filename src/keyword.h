@@ -16,6 +16,8 @@ void cd_keyword(const int argc, const char *argv[]);
 
 void pwd_keyword(void);
 
+void env_keyword(const char **envp);
+
 #define NOT_A_KEYWORD 0
 
 #define EXIT_KEYWORD_S "exit"
@@ -33,5 +35,7 @@ void pwd_keyword(void);
 #define PWD_KEYWORD_S "pwd"
 #define PWD_KEYWORD_N 5
 
+#define ENV_KEYWORD_S "env"
+#define ENV_KEYWORD_N 6
 
 #endif
