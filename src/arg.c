@@ -30,14 +30,27 @@ arg_t skip_whitespace(const arg_t arg) {
 	return ret;
 }
 
-// decrease the args length till it encapsulates
-// everything not in whitespace
-arg_t trunc_to_white(const arg_t arg) {
+// cap the args length to the nearest whitespace
+arg_t cap_to_white(const arg_t arg) {
 	arg_t  ret = arg;
 	size_t i = 0;
 
-	while (!isspace(ret.ptr[i]) && i < ret.len) {
+	while (!isspace(ret.ptr[i]) && i < arg.len) {
 		i++;
+	}
+
+	ret.len = i;
+
+	return ret;
+}
+
+// truncate an arg to a specific char
+arg_t trunc_to_char(const arg_t arg, const char c) {
+	arg_t  ret = arg;
+	size_t i = arg.len;
+
+	while (arg.ptr[i] != c && i > 0) {
+		i--;
 	}
 
 	ret.len = i;

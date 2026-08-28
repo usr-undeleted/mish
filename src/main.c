@@ -16,21 +16,166 @@
 // takes in a char to see if its either '/', '.', or '~', aka a path
 #define IS_A_PATH(c) (c == '/' ? 1 : c == '.' ? 1 : c == '~' ? 1 : 0)
 
+#define NO_QUOTES 0
+#define QUOTE_DBL 1
+#define QUOTE_SIN 2
+
+#define QUOTE_T(c) (c == '\"' ? QUOTE_DBL : c == '\'' ? QUOTE_SIN : NO_QUOTES)
+
+// find the equivalent closer for the opener
+// returns null on failure to find the closer, or when the
+// pointer provided isn't the open char
+char *find_closer(arg_t arg, const char open, const char close) {
+	if (*arg.ptr != open) return NULL;
+
+	size_t depth = 0;
+	size_t i     = 0;
+
+	while (i < arg.len) {
+		if (arg.ptr[i] == open) {
+			depth++;
+		} else if (arg.ptr[i] == close) {
+			depth--;
+		}
+
+		if (!depth) return &arg.ptr[i];
+
+		i++;
+	}
+
+	return NULL;
+}
+
 // form an arg, allocating memory automatically
 int parse_arg(arg_t *dest, arg_t src) {
 	size_t src_i  = 0;
-	size_t dest_i = 0;
 
 	if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
 
 	dest->len = 0;
 
-	while (src_i < src.len) {
-		dest->ptr[dest_i++] = src.ptr[src_i++];
-		dest->len++;
+	char quote_type = NO_QUOTES;
 
+	while (src_i < src.len) {
+		// realloc if needed
 		if (dest->len >= dest->asz) {
 			if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
+		}
+
+		switch (src.ptr[src_i]) {
+			printf("%ld: %s\n", src_i, &src.ptr[src_i]);
+
+			// stuff like env vars
+			case '$': {
+				if (quote_type == QUOTE_SIN) goto copy_memory;
+
+				// skip dollar sign
+				src_i++;
+				switch (src.ptr[src_i]) {
+					// env var expansion
+					case '(': {
+						arg_t arg = {
+							.ptr = src.ptr + src_i,
+							.len = src.len - src_i,
+							.asz = src.asz - src_i,
+						};
+
+						char *close = find_closer(arg, '(', ')');
+
+						if (!close) {
+							// since we failed, move back and copy
+							--src_i;
+							goto copy_memory;
+						}
+
+						// encapsulates the whole $(ENV)
+						arg.len = close - arg.ptr + 1;
+
+						char *start = arg.ptr + 1;
+						*close = '\0';
+
+						// make sure to skip everything from the source
+						src_i += strlen(start) + 1;
+						char *env = getenv(start);
+						if (!env) {
+							break;
+						};
+
+						// append to dest
+						// increase size if needed
+						if ((dest->len + strlen(env)) >= dest->asz) {
+							if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
+						}
+
+						dest->len += snprintf(dest->ptr + dest->len,
+							dest->asz - dest->len,
+							"%s", env) + 1;
+
+						*close = ')';
+
+						break;
+					}
+
+					default: {
+						--src_i;
+						goto copy_memory;
+					}
+				}
+
+				continue;
+			}
+
+			// home dir on start
+			case '~': {
+				if (quote_type == QUOTE_SIN) goto copy_memory;
+
+				if (dest->len == 0) {
+					char *env = getenv("HOME");
+					if (!env) goto copy_memory;
+
+					if ((dest->len + strlen(env)) >= dest->asz) {
+						if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
+					}
+
+					dest->len += snprintf(dest->ptr + dest->len,
+						dest->asz - dest->len,
+						"%s", env) + 1;
+
+					++src_i;
+
+				} else goto copy_memory;
+
+				break;
+			}
+
+			default: {
+				goto copy_memory;
+
+				break;
+			}
+		}
+
+		copy_memory: {
+			char char_quote = QUOTE_T(src.ptr[src_i]);
+
+			if (char_quote) {
+				if (!quote_type) {
+					// quotes haven't been set
+					quote_type = char_quote;
+					++src_i;
+
+				} else {
+					if (quote_type == char_quote) {
+						quote_type = 0;
+						++src_i;
+					}
+
+				}
+
+				continue;
+			}
+
+			dest->ptr[dest->len++] = src.ptr[src_i++];
 		}
 	}
 
@@ -76,7 +221,6 @@ int main(int argc, char *argv[], char *envp[]) {
 	// make $PATH
 	refresh_path();
 
-	/*
 	// switch term options
 	// get original options
 	if (tcgetattr(STDIN_FILENO, &original_term) != 0) {
@@ -92,15 +236,11 @@ int main(int argc, char *argv[], char *envp[]) {
 	new_term.c_cflag &= ~(ICANON | ECHO);
 	new_term.c_cc[VMIN]  = 1;
 	new_term.c_cc[VTIME] = 0;
-	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_term) != 0) {
+	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_term) != 0) {
 		fprintf(stderr, "%s: failed to set new terminal configuration: %s\n",
 			basename(argv[0]), strerror(errno));
 		return 1;
 	}
-
-	sleep(1);
-	return 0;
-	*/
 
 	int status = 0;
 
@@ -133,7 +273,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			if (arg_empty(work)) break;
 
 			// limits size to whitespace
-			arg_t cmd_arg = trunc_to_white(work);
+			arg_t cmd_arg = cap_to_white(work);
 
 			if (parse_arg(&child_argv[child_argc], cmd_arg) != 0) return 1;
 

@@ -35,7 +35,7 @@ arg_t skip_whitespace(const arg_t arg);
 
 // decrease the args length till it encapsulates
 // everything not in whitespace
-arg_t trunc_to_white(const arg_t arg);
+arg_t cap_to_white(const arg_t arg);
 
 // (re)allocates a pointer for an arg
 int alloc_arg(arg_t *arg, const size_t sz);
