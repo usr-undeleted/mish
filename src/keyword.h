@@ -24,6 +24,10 @@ int unset_keyword(const int argc, const char *argv[]);
 
 int path_keyword(void);
 
+int alias_keyword(const int argc, const char *argv[]);
+
+int unalias_keyword(const int argc, const char *argv[]);
+
 #define NOT_A_KEYWORD 0
 
 #define EXIT_KEYWORD_S "exit"
@@ -52,5 +56,11 @@ int path_keyword(void);
 
 #define PATH_KEYWORD_S "path"
 #define PATH_KEYWORD_N 9
+
+#define ALIAS_KEYWORD_S "alias"
+#define ALIAS_KEYWORD_N 10
+
+#define UNALIAS_KEYWORD_S "unalias"
+#define UNALIAS_KEYWORD_N 11
 
 #endif

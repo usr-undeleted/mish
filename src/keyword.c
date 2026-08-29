@@ -10,6 +10,7 @@
 #include "keyword.h"
 #include "arg.h"
 #include "path.h"
+#include "alias.h"
 
 #define KEY_SUCCESS     0
 #define KEY_PARTIAL_ERR 1
@@ -44,6 +45,12 @@ int find_keyword(const char *str) {
     } else if (!strcmp(str, PATH_KEYWORD_S)) {
     	return PATH_KEYWORD_N;
 
+    } else if (!strcmp(str, ALIAS_KEYWORD_S)) {
+    	return ALIAS_KEYWORD_N;
+
+    } else if (!strcmp(str, UNALIAS_KEYWORD_S)) {
+    	return UNALIAS_KEYWORD_N;
+
     } else {
         return NOT_A_KEYWORD;
     }
@@ -72,16 +79,16 @@ int which_keyword(const int argc, const char *argv[]) {
 		}
 
 		if (!resolved) {
-			printf("%s: unknown binary \"%s\".\n", WHICH_KEYWORD_S, argv[i]);
+			fprintf(stderr, "%s: unknown binary \"%s\".\n", WHICH_KEYWORD_S, argv[i]);
 			err = true;
 
 		} else {
 			printf("%s -> %s\n", argv[i], resolved);
-
 		}
 	}
 
 	fflush(stdout);
+	if (err == true) fflush(stderr);
 	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
 }
 
@@ -157,8 +164,18 @@ int export_keyword(const int argc, const char *argv[]) {
 
 	bool err = false;
 	for (int i = 1; i < argc; i++) {
-		char *eq = strchr(argv[i], '=');
+		arg_t arg = make_arg(argv[i]);
+
+		char *eq = arg_chr(arg, '=');
+		if (eq == arg.ptr) {
+			fprintf(stderr, "%s: malformed request.\n", ALIAS_KEYWORD_S);
+			err = true;
+			continue;
+		}
+
 		if (eq) *eq = '\0';
+
+		if (eq && !strcmp(argv[i], "PATH")) refresh_path();
 
 		if (setenv(argv[i], eq ? eq + 1 : "", true) != 0) {
 			fprintf(stderr, "%s: failed to set environment variable \"%s\": %s\n",
@@ -170,7 +187,7 @@ int export_keyword(const int argc, const char *argv[]) {
 		if (eq) *eq = '=';
 	}
 
-	fflush(stderr);
+	if (err == true) fflush(stderr);
 
 	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
 }
@@ -193,7 +210,7 @@ int unset_keyword(const int argc, const char *argv[]) {
 		}
 	}
 
-	fflush(stderr);
+	if (err == true) fflush(stderr);
 	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
 }
 

@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <limits.h>
 #include <stddef.h>
 #include <termios.h>
 #include <errno.h>
@@ -13,6 +14,7 @@
 #include "arg.h"
 #include "keyword.h"
 #include "path.h"
+#include "alias.h"
 
 #define NO_QUOTES 0
 #define QUOTE_DBL 1
@@ -24,8 +26,8 @@
 #define EMPTY_C(c) (isspace(c) ? 1 : iscntrl(c) ? 1 : 0)
 // takes in a char to see if its either '/', '.', or '~', aka a path
 #define IS_A_PATH(c) (c == '/' ? 1 : c == '.' ? 1 : c == '~' ? 1 : 0)
-// get the biggest value
-#define MAX(x, y) (x > y ? x : y)
+
+#define ARGV_ARR_ASZ 8
 
 // find the equivalent closer for the opener
 // returns null on failure to find the closer, or when the
@@ -192,11 +194,9 @@ int parse_arg(arg_t *dest, arg_t src) {
 	return 0;
 }
 
-#define ARGV_ARR_ASZ 8
-
 // edits an arg_t with content from fd, allocating memory automatically
 // reads until a newline
-int read_user_input(arg_t *dest, int fd) {
+int read_fd_line(arg_t *dest, int fd) {
 	size_t i = 0;
 	char  ch = 0;
 
@@ -269,7 +269,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 		fflush(stdout);
 
-		if (read_user_input(&input, STDIN_FILENO)) return 1;
+		if (read_fd_line(&input, STDIN_FILENO)) return 1;
 
 		if (arg_empty(input)) {
 			// put newline if needed
@@ -280,8 +280,8 @@ int main(int argc, char *argv[], char *envp[]) {
 			continue;
 		}
 
-		arg_t             work = input;
-		int			child_argc = 0;
+		arg_t     work = input;
+		int child_argc = 0;
 
 		while (work.len) {
 			if ((size_t)(child_argc + 1) >= (child_argv.asz / sizeof(arg_t))) {
