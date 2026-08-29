@@ -4,8 +4,6 @@
 
 #include "arg.h"
 
-#define MAX(x, y) x > y ? x : y
-
 // make a new arg, going to the nearest whitespace
 arg_t goto_whitespace(const arg_t arg) {
 	arg_t ret = arg;
@@ -155,11 +153,40 @@ void free_arg_arr(arg_arr_t *arr) {
 	arr->icnt = 0;
 }
 
-// like strdup, but for args
-// returns a new allocated arg
-arg_t dup_arg(const arg_t base) {
-	arg_t ret             = base;
-	if (base.ptr) ret.ptr = strdup(base.ptr);
-	ret.asz               = base.len;
-	return ret;
+// copy an arg to another, automatically
+// (re)allocating memory
+int arg_cpy(arg_t *dest, const arg_t src) {
+	if (!dest) return 1;
+
+	if (src.len > dest->asz) {
+		if (alloc_arg(dest, src.len + 1)) return 1;
+		dest->asz = src.len + 1;
+	}
+
+	memcpy(dest->ptr, src.ptr, src.len);
+	dest->len = src.len;
+
+	return 0;
+};
+
+// like strchr, but the field is
+// an arg (limits itself to the length)
+char *arg_chr(const arg_t arg, const char ch) {
+	for (size_t i = 0; i < arg.len; i++) {
+		if (arg.ptr[i] == ch) return arg.ptr + i;
+	}
+
+	return NULL;
+}
+
+// return a copy of the arg with a specific
+// offset, shifting to the right only
+// note that this shifts the pointer to
+// at max its length
+arg_t shift_arg(arg_t arg, size_t off) {
+	arg.len -= MIN(arg.len, off);
+	arg.asz -= MIN(arg.len, off);
+	arg.ptr += MIN(arg.len, off);
+
+	return arg;
 }

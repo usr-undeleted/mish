@@ -10,7 +10,6 @@
 #include "keyword.h"
 #include "arg.h"
 #include "path.h"
-#include "alias.h"
 
 #define KEY_SUCCESS     0
 #define KEY_PARTIAL_ERR 1

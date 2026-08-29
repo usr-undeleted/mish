@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 
+#define MAX(x, y) x > y ? x : y
+#define MIN(x, y) x < y ? x : y
+
 // *_alloc_sz macros to define how much
 // to allocate for at once
 #define ARGV_ASZ 16
@@ -45,6 +48,8 @@ int alloc_arg(arg_t *arg, const size_t sz);
 int arg_empty(arg_t arg);
 
 // (re)allocate a arg_t pointer for a list
+// this allocates the number of indexes on the list,
+// not the actual items
 int alloc_arg_arr(arg_arr_t *arr, size_t sz);
 
 // compare two args
@@ -68,8 +73,18 @@ void zero_arg_arr(arg_arr_t *arr);
 // free every item on array
 void free_arg_arr(arg_arr_t *arr);
 
-// like strdup, but for args
-// returns a new allocated arg
-arg_t dup_arg(const arg_t base);
+// copy an arg to another, automatically
+// (re)allocating memory
+int arg_cpy(arg_t *dest, arg_t src);
+
+// like strchr, but the field is
+// an arg (limits itself to the length)
+char *arg_chr(const arg_t arg, const char ch);
+
+// return a copy of the arg with a specific
+// offset, shifting to the right only
+// note that this shifts the pointer to
+// at max its length
+arg_t shift_arg(arg_t arg, size_t off);
 
 #endif

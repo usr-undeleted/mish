@@ -14,7 +14,6 @@
 #include "arg.h"
 #include "keyword.h"
 #include "path.h"
-#include "alias.h"
 
 #define NO_QUOTES 0
 #define QUOTE_DBL 1
