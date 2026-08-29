@@ -54,10 +54,8 @@ char *find_closer(arg_t arg, const char open, const char close) {
 
 // form an arg, allocating memory automatically
 int parse_arg(arg_t *dest, arg_t src) {
+	free_arg(dest);
 	size_t src_i  = 0;
-
-	if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
-
 	dest->len = 0;
 
 	char quote_type = NO_QUOTES;

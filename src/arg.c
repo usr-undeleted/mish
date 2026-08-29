@@ -58,18 +58,6 @@ arg_t trunc_to_char(const arg_t arg, const char c) {
 
 // (re)allocates a pointer for an arg
 int alloc_arg(arg_t *arg, const size_t sz) {
-	// if it doesn't exist
-	if (!arg->ptr) {
-		arg->ptr = calloc(sizeof(char), sz);
-		if (!arg->ptr) return 1;
-
-		arg->len = 0;
-		arg->asz = sz;
-
-		return 0;
-	}
-
-	// else, add to allocation
 	arg->ptr = realloc(arg->ptr, arg->asz + sz);
 	if (!arg->ptr) return 1;
 
