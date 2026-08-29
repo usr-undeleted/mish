@@ -229,6 +229,9 @@ int main(int argc, char *argv[], char *envp[]) {
 	// make $PATH
 	refresh_path();
 
+	// i have to figure out input like this in order to process stuff like
+	// arrow keys! only problem would be unicode... but im sure i could figure
+	// something out with a macro
 	/*
 	// switch term options
 	// get original options
