@@ -1,4 +1,3 @@
-#include <ctype.h>
 #include <limits.h>
 #include <stddef.h>
 #include <termios.h>
@@ -11,6 +10,7 @@
 #include <stdio.h>
 #include <libgen.h>
 
+#include "alias.h"
 #include "arg.h"
 #include "keyword.h"
 #include "path.h"
@@ -21,8 +21,6 @@
 
 // get the quote type of a char
 #define QUOTE_T(c) (c == '\"' ? QUOTE_DBL : c == '\'' ? QUOTE_SIN : NO_QUOTES)
-// check if a char is empty
-#define EMPTY_C(c) (isspace(c) ? 1 : iscntrl(c) ? 1 : 0)
 // takes in a char to see if its either '/', '.', or '~', aka a path
 #define IS_A_PATH(c) (c == '/' ? 1 : c == '.' ? 1 : c == '~' ? 1 : 0)
 
@@ -54,6 +52,7 @@ char *find_closer(arg_t arg, const char open, const char close) {
 
 // form an arg, allocating memory automatically
 int parse_arg(arg_t *dest, arg_t src) {
+	if (!dest) return 1;
 	free_arg(dest);
 	size_t src_i  = 0;
 	dest->len = 0;
@@ -221,8 +220,57 @@ void restore_term(void) {
 }
 */
 
+// remake an arg (like input), doing the following:
+// 1. replacing the immediate first argument with an alias
+// 2. (to be added) globbing files
+int remake_arg(arg_t *dest, const arg_t src) {
+	if (!dest) return 1;
+	dest->len = 0;
+	size_t src_i = 0;
+
+	bool aliased = false;
+
+	while (src_i < src.len) {
+		// realloc if needed
+		if (dest->len >= dest->asz) {
+			if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
+		}
+
+		// here, globbing should take priority over any
+		// alias check
+		// also, note that any form of globbing would naturally
+		// set 'aliased' to false
+
+		if (aliased == false && !EMPTY_C(src.ptr[src_i])) {
+			// make the alias
+			arg_t alias = find_alias(cap_to_white(shift_arg(src, src_i)), NULL);
+
+			// put it in the dest
+			if ((dest->len + alias.len) >= dest->asz) {
+				if (alloc_arg(dest, MAX(ARGV_ASZ, alias.len))) return 1;
+			}
+
+			dest->len += snprintf(dest->ptr + dest->len, dest->asz - dest->len,
+				"%.*s", (int)alias.len, alias.ptr);
+
+			idx_to_white(&src_i, src);
+			aliased = true;
+			continue;
+		}
+
+		dest->ptr[dest->len++] = src.ptr[src_i++];
+	}
+
+	return 0;
+}
+
 int main(int argc, char *argv[], char *envp[]) {
 	(void)argc;(void)argv;(void)envp;
+
+	// example
+	new_alias(make_arg("ls"), make_arg("printf \\e[31malias!\\e[0m\\n"));
+	//new_alias(make_arg("ls"), make_arg("echo RAHHHH"));
+	//remove_alias(make_arg("ls"));
 
 	// make $PATH
 	refresh_path();
@@ -280,7 +328,10 @@ int main(int argc, char *argv[], char *envp[]) {
 			continue;
 		}
 
-		arg_t     work = input;
+		arg_t remade = {0};
+		if (remake_arg(&remade, input) != 0) return 1;
+
+		arg_t     work = remade;
 		int child_argc = 0;
 
 		while (work.len) {
@@ -419,6 +470,7 @@ int main(int argc, char *argv[], char *envp[]) {
 		end_loop: {
 			zero_arg_arr(&child_argv);
 			zero_arg(&input);
+			free_arg(&remade);
 			if (!isatty(STDIN_FILENO)) break;
 		}
 	}

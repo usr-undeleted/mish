@@ -2,9 +2,13 @@
 #define ARG_H
 
 #include <stddef.h>
+#include <ctype.h>
 
 #define MAX(x, y) x > y ? x : y
 #define MIN(x, y) x < y ? x : y
+
+// check if a char is empty
+#define EMPTY_C(c) (isspace(c) ? 1 : iscntrl(c) ? 1 : 0)
 
 // *_alloc_sz macros to define how much
 // to allocate for at once
@@ -86,5 +90,19 @@ char *arg_chr(const arg_t arg, const char ch);
 // note that this shifts the pointer to
 // at max its length
 arg_t shift_arg(arg_t arg, size_t off);
+
+// move an index of an arg to the right until
+// it hits an empty character
+void idx_to_white(size_t *i, const arg_t arg);
+
+// cap an arg to a specific char
+arg_t cap_to_char(const arg_t arg, const char c);
+
+// same logic as shift_arg(), but shifts
+// until a specific char (or until it can't anymore)
+arg_t shift_arg_c(arg_t arg, const char c);
+
+// append an arg to another, allocating if needed
+int append_arg(arg_t *dest, const arg_t src);
 
 #endif

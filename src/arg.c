@@ -42,13 +42,13 @@ arg_t cap_to_white(const arg_t arg) {
 	return ret;
 }
 
-// truncate an arg to a specific char
-arg_t trunc_to_char(const arg_t arg, const char c) {
+// cap an arg to a specific char
+arg_t cap_to_char(const arg_t arg, const char c) {
 	arg_t  ret = arg;
-	size_t i = arg.len;
+	size_t i = 0;
 
-	while (arg.ptr[i] != c && i > 0) {
-		i--;
+	while (arg.ptr[i] != c && i < arg.len) {
+		i++;
 	}
 
 	ret.len = i;
@@ -171,10 +171,46 @@ char *arg_chr(const arg_t arg, const char ch) {
 // offset, shifting to the right only
 // note that this shifts the pointer to
 // at max its length
-arg_t shift_arg(arg_t arg, size_t off) {
+arg_t shift_arg(arg_t arg, const size_t off) {
 	arg.len -= MIN(arg.len, off);
 	arg.asz -= MIN(arg.len, off);
 	arg.ptr += MIN(arg.len, off);
 
 	return arg;
+}
+
+// same logic as shift_arg(), but shifts
+// until a specific char (or until it can't anymore)
+arg_t shift_arg_c(arg_t arg, const char c) {
+	size_t i = 0;
+
+	while (i < arg.len && arg.ptr[i] != c) i++;
+
+	arg.ptr += i;
+	arg.len -= i;
+	arg.asz -= i;
+
+	return arg;
+}
+
+// move an index of an arg to the right until
+// it hits an empty character
+void idx_to_white(size_t *i, const arg_t arg) {
+	if (!i) return;
+
+	while (*i < arg.len && !EMPTY_C(arg.ptr[*i])) (*i)++;
+}
+
+// append an arg to another, allocating if needed
+int append_arg(arg_t *dest, const arg_t src) {
+	if (!dest) return 1;
+
+	if ((dest->len + src.len) > dest->asz) {
+		if (alloc_arg(dest, (dest->len + src.len) - dest->asz)) return 1;
+	}
+
+	memcpy(dest->ptr + dest->len, src.ptr, src.len);
+	dest->len += src.len;
+
+	return 0;
 }
