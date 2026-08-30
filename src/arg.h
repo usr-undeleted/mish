@@ -10,6 +10,15 @@
 // check if a char is empty
 #define EMPTY_C(c) (isspace(c) ? 1 : iscntrl(c) ? 1 : 0)
 
+#define NO_QUOTES 0
+#define QUOTE_DBL 1
+#define QUOTE_SIN 2
+
+// get the quote type of a char
+#define QUOTE_T(c) (c == '\"' ? QUOTE_DBL : c == '\'' ? QUOTE_SIN : NO_QUOTES)
+// takes in a char to see if its either '/', '.', or '~', aka a path
+#define IS_A_PATH(c) (c == '/' ? 1 : c == '.' ? 1 : c == '~' ? 1 : 0)
+
 // *_alloc_sz macros to define how much
 // to allocate for at once
 #define ARGV_ASZ 16

@@ -15,15 +15,6 @@
 #include "keyword.h"
 #include "path.h"
 
-#define NO_QUOTES 0
-#define QUOTE_DBL 1
-#define QUOTE_SIN 2
-
-// get the quote type of a char
-#define QUOTE_T(c) (c == '\"' ? QUOTE_DBL : c == '\'' ? QUOTE_SIN : NO_QUOTES)
-// takes in a char to see if its either '/', '.', or '~', aka a path
-#define IS_A_PATH(c) (c == '/' ? 1 : c == '.' ? 1 : c == '~' ? 1 : 0)
-
 #define ARGV_ARR_ASZ 8
 
 // find the equivalent closer for the opener
@@ -196,7 +187,12 @@ int read_fd_line(arg_t *dest, int fd) {
 	size_t i = 0;
 	char  ch = 0;
 
-	while (read(fd, &ch, 1)) {
+	ssize_t r = 0;
+	while (1) {
+		r = read(fd, &ch, 1);
+		if (r == -1)  return 1;
+		else if (r == 0) break;
+
 		if ((dest->len + 1) > dest->asz) {
 			if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
 		}

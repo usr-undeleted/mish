@@ -7,10 +7,42 @@
 // make a new arg, going to the nearest whitespace
 arg_t goto_whitespace(const arg_t arg) {
 	arg_t ret = arg;
+	char quote_type = NO_QUOTES;
 
-	while (!isspace(*ret.ptr) && ret.len) {
-		ret.ptr++;
-		ret.len--;
+	while (ret.len) {
+		char q = QUOTE_T(*ret.ptr);
+
+		// as much as i love switches, they'd be
+		// even more indentation hell than what i
+		// already have in here :p
+		if (q != NO_QUOTES) {
+			if (quote_type) {
+				if (quote_type == q) quote_type = NO_QUOTES;
+
+			} else {
+				quote_type = q;
+			}
+
+			goto end_loop;
+
+		} else if (*ret.ptr == '\\' && quote_type == NO_QUOTES) {
+			// since we are outside quotes, we
+			// skip a character
+			ret.ptr++;
+			ret.len--;
+			ret.asz--;
+
+			goto end_loop;
+
+		} else if (quote_type == NO_QUOTES && isspace(*ret.ptr)) {
+			break;
+		}
+
+		end_loop: {
+			ret.ptr++;
+			ret.len--;
+			ret.asz--;
+		}
 	}
 
 	return ret;
@@ -23,6 +55,7 @@ arg_t skip_whitespace(const arg_t arg) {
 	while (isspace(*ret.ptr) && ret.len) {
 		ret.ptr++;
 		ret.len--;
+		ret.asz--;
 	}
 
 	return ret;
@@ -38,6 +71,7 @@ arg_t cap_to_white(const arg_t arg) {
 	}
 
 	ret.len = i;
+	ret.asz = i;
 
 	return ret;
 }
@@ -52,6 +86,7 @@ arg_t cap_to_char(const arg_t arg, const char c) {
 	}
 
 	ret.len = i;
+	ret.asz = i;
 
 	return ret;
 }
@@ -84,6 +119,8 @@ int alloc_arg_arr(arg_arr_t *arr, size_t sz) {
 
 	arr->ptr = realloc(arr->ptr, (arr->asz + sz) * sizeof(arg_t));
     if (!arr->ptr) return 1;
+
+    memset(arr->ptr + arr->asz, '\0', sz);
     arr->asz += sz;
 
     return 0;
@@ -106,14 +143,14 @@ arg_t make_arg(const char *str) {
     arg_t ret = {
         .ptr = (char *)str,
         .len = len,
-        .asz = 0,
+        .asz = len,
     };
 
     return ret;
 }
 
 void free_arg(arg_t *arg) {
-	if (arg->asz) free(arg->ptr);
+	if (arg->ptr) free(arg->ptr);
 	memset(arg, '\0', sizeof(arg_t));
 }
 

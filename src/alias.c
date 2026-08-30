@@ -19,7 +19,7 @@ size_t find_list_idx(void) {
 
 	return ret;
 }
-#include <stdio.h>
+
 // find an alias and return the pointer
 arg_t *alias_exists(const arg_t name) {
 	for (size_t i = 0; i < aliases.icnt; i++) {
@@ -60,6 +60,7 @@ int new_alias(const arg_t label, const arg_t cmd) {
 		}
 
 		ptr = &aliases.ptr[aliases.icnt];
+		free_arg(ptr);
 		if (append_arg(ptr, label)) return 1;
 		if (append_arg(ptr, make_arg("="))) return 1;
 		if (append_arg(ptr, cmd)) return 1;
@@ -67,7 +68,7 @@ int new_alias(const arg_t label, const arg_t cmd) {
 		aliases.icnt++;
 
 	} else {
-		// alias exists, replace it
+		// alias is in middle of list, replace it
 		zero_arg(ptr);
 		if (append_arg(ptr, label)) return 1;
 		if (append_arg(ptr, make_arg("="))) return 1;
