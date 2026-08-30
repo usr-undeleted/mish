@@ -267,11 +267,6 @@ int remake_arg(arg_t *dest, const arg_t src) {
 int main(int argc, char *argv[], char *envp[]) {
 	(void)argc;(void)argv;(void)envp;
 
-	// example
-	new_alias(make_arg("ls"), make_arg("printf \\e[31malias!\\e[0m\\n"));
-	//new_alias(make_arg("ls"), make_arg("echo RAHHHH"));
-	//remove_alias(make_arg("ls"));
-
 	// make $PATH
 	refresh_path();
 
@@ -414,6 +409,16 @@ int main(int argc, char *argv[], char *envp[]) {
 
 				case PATH_KEYWORD_N: {
 					status = path_keyword();
+					break;
+				}
+
+				case ALIAS_KEYWORD_N: {
+					status = alias_keyword(child_argc, (const char **)passed_argv);
+					break;
+				}
+
+				case UNALIAS_KEYWORD_N: {
+					status = unalias_keyword(child_argc, (const char **)passed_argv);
 					break;
 				}
 

@@ -10,6 +10,7 @@
 #include "keyword.h"
 #include "arg.h"
 #include "path.h"
+#include "alias.h"
 
 #define KEY_SUCCESS     0
 #define KEY_PARTIAL_ERR 1
@@ -167,7 +168,7 @@ int export_keyword(const int argc, const char *argv[]) {
 
 		char *eq = arg_chr(arg, '=');
 		if (eq == arg.ptr) {
-			fprintf(stderr, "%s: malformed request.\n", ALIAS_KEYWORD_S);
+			fprintf(stderr, "%s: malformed request.\n", EXPORT_KEYWORD_S);
 			err = true;
 			continue;
 		}
@@ -222,4 +223,54 @@ int path_keyword(void) {
 	}
 	fflush(stdout);
 	return KEY_SUCCESS;
+}
+
+int alias_keyword(const int argc, const char *argv[]) {
+	bool err = false;
+	if (argc < 2) {
+		fprintf(stderr, "%s: too little arguments.\n", ALIAS_KEYWORD_S);
+		fflush(stderr);
+		return KEY_FULL_ERR;
+	}
+
+	for (int i = 1; i < argc; i++) {
+		arg_t arg = make_arg(argv[i]);
+
+		// make sure there's an equal sign
+		char *eq = arg_chr(arg, '=');
+		if (!eq) {
+			fprintf(stderr, "%s: malformed request.\n", ALIAS_KEYWORD_S);
+			err = true;
+			continue;
+		}
+
+		if (new_alias(cap_to_char(arg, '='), shift_arg(shift_arg_c(arg, '='), 1))) {
+			fprintf(stderr, "%s: failed to make a new alias.\n", ALIAS_KEYWORD_S);
+			err = true;
+			continue;
+		}
+	}
+
+	if (err == true) fflush(stderr);
+	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
+}
+
+int unalias_keyword(const int argc, const char **argv) {
+	bool err = false;
+	if (argc < 2) {
+		fprintf(stderr, "%s: too little arguments.\n", UNALIAS_KEYWORD_S);
+		fflush(stderr);
+		return KEY_FULL_ERR;
+	}
+
+	for (int i = 1; i < argc; i++) {
+		if (remove_alias(make_arg(argv[i])) != 0) {
+			fprintf(stderr, "%s: failed to remove an alias.\n", UNALIAS_KEYWORD_S);
+			err = true;
+			continue;
+		}
+	}
+
+	if (err == true) fflush(stderr);
+	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
 }
