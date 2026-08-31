@@ -162,7 +162,19 @@ int pwd_keyword(void) {
 
 int env_keyword(const char *envp[]) {
 	while (*envp) {
-		printf("%s\n", *envp);
+		const arg_t env = make_arg(*envp);
+
+		// label and equal
+		arg_t prev = cap_to_char(env, '=');
+		prev.len++;
+
+		// value, ignore the special treatment :P
+		arg_t last = shift_arg(shift_arg_c(env, '='), 1);
+
+		printf("%.*s\e[1m%.*s\e[0m\n",
+			(int)prev.len, prev.ptr,
+			(int)last.len, last.ptr);
+
 		envp++;
 	}
 	fflush(stdout);
