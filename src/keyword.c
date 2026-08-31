@@ -63,18 +63,32 @@ int exit_keyword(void) {
 
 int which_keyword(const int argc, const char *argv[]) {
 	if (argc < 2) {
-		fprintf(stderr, "%s: too little arguments.\n", WHICH_KEYWORD_S);
+		fprintf(stderr, "%s: not 'nuff arguments.\n", WHICH_KEYWORD_S);
 		fflush(stderr);
 		return KEY_FULL_ERR;
 	}
 
 	bool err = false;
 	for (int i = 1; i < argc; i++) {
-		char *resolved = fetch_from_path(make_arg(argv[i]));
+		arg_t arg = make_arg(argv[i]);
 
+		// aliases
+		int status = 0;
+		arg = find_alias(arg, &status);
+
+		if (status == 0) {
+			// alias was found
+			printf("\"%s\" <aliased to> -> \"%.*s\"\n", argv[i], (int)arg.len, arg.ptr);
+			continue;
+		}
+
+		// get the stuff from path now
+		char *resolved = fetch_from_path(arg);
+
+		// keywords
 		int key = find_keyword(argv[i]);
 		if (key != NOT_A_KEYWORD) {
-			printf("%s -> <built-in>\n", argv[i]);
+			printf("\"%s\" -> <built-in>\n", argv[i]);
 			continue;
 		}
 
@@ -83,7 +97,7 @@ int which_keyword(const int argc, const char *argv[]) {
 			err = true;
 
 		} else {
-			printf("%s -> %s\n", argv[i], resolved);
+			printf("\"%s\" -> \"%s\"\n", argv[i], resolved);
 		}
 	}
 
@@ -157,7 +171,7 @@ int env_keyword(const char *envp[]) {
 
 int export_keyword(const int argc, const char *argv[]) {
 	if (argc < 2) {
-		fprintf(stderr, "%s: too little arguments.\n", EXPORT_KEYWORD_S);
+		fprintf(stderr, "%s: not 'nuff arguments.\n", EXPORT_KEYWORD_S);
 		fflush(stderr);
 		return KEY_FULL_ERR;
 	}
@@ -195,7 +209,7 @@ int export_keyword(const int argc, const char *argv[]) {
 int unset_keyword(const int argc, const char *argv[]) {
 	bool err = false;
 	if (argc < 2) {
-		fprintf(stderr, "%s: too little arguments.\n", UNSET_KEYWORD_S);
+		fprintf(stderr, "%s: not 'nuff arguments.\n", UNSET_KEYWORD_S);
 		fflush(stderr);
 		return KEY_FULL_ERR;
 	}
@@ -217,10 +231,14 @@ int unset_keyword(const int argc, const char *argv[]) {
 int path_keyword(void) {
 	size_t i = 0;
 	char *path;
+
 	while ((path = reveal_path(&i))) {
 		char *f = basename(path);
 		printf("%.*s/\e[1m%s\e[0m\n", (int)(f - path) - 1, path, f);
 	}
+
+	if (!i) printf("<no paths have been defined>\n");
+
 	fflush(stdout);
 	return KEY_SUCCESS;
 }
@@ -228,9 +246,22 @@ int path_keyword(void) {
 int alias_keyword(const int argc, const char *argv[]) {
 	bool err = false;
 	if (argc < 2) {
-		fprintf(stderr, "%s: too little arguments.\n", ALIAS_KEYWORD_S);
-		fflush(stderr);
-		return KEY_FULL_ERR;
+		// print every alias
+		size_t i = 0;
+		arg_t *p = NULL;
+
+		while ((p = reveal_alias(&i))) {
+			if (p->ptr && p->asz) {
+				printf("%.*s\n", (int)p->len, p->ptr);
+			}
+
+			i++;
+		}
+
+		if (!i) printf("<no aliases set>\n");
+
+		fflush(stdout);
+		return KEY_SUCCESS;
 	}
 
 	for (int i = 1; i < argc; i++) {
@@ -258,7 +289,7 @@ int alias_keyword(const int argc, const char *argv[]) {
 int unalias_keyword(const int argc, const char **argv) {
 	bool err = false;
 	if (argc < 2) {
-		fprintf(stderr, "%s: too little arguments.\n", UNALIAS_KEYWORD_S);
+		fprintf(stderr, "%s: not 'nuff arguments.\n", UNALIAS_KEYWORD_S);
 		fflush(stderr);
 		return KEY_FULL_ERR;
 	}

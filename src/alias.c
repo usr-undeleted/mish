@@ -99,3 +99,13 @@ void free_aliases(void) {
 		free_arg(&aliases.ptr[i]);
 	}
 }
+
+// with an index shared beetwen the function and caller,
+// reveal contents from the alias list, returning NULL if
+// the index goes beyond the list size. this does mean that
+// it can return an empty item, so check for that!
+arg_t *reveal_alias(size_t *i) {
+	if (*i >= aliases.icnt) return NULL;
+
+	return &aliases.ptr[*i];
+}
