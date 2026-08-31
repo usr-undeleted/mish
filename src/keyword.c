@@ -252,7 +252,16 @@ int alias_keyword(const int argc, const char *argv[]) {
 
 		while ((p = reveal_alias(&i))) {
 			if (p->ptr && p->asz) {
-				printf("%.*s\n", (int)p->len, p->ptr);
+				// label and equal
+				arg_t prev = cap_to_char(*p, '=');
+				prev.len++;
+
+				// replacement command
+				arg_t last = shift_arg(*p, prev.len);
+
+				printf("%.*s\"\e[1m%.*s\e[0m\"\n",
+					(int)prev.len, prev.ptr,
+					(int)last.len, last.ptr);
 			}
 
 			i++;
