@@ -16,14 +16,14 @@ arg_t goto_whitespace(const arg_t arg) {
 		// even more indentation hell than what i
 		// already have in here :p
 		if (q != NO_QUOTES) {
-			if (quote_type) {
+			if (quote_type != NO_QUOTES) {
 				if (quote_type == q) quote_type = NO_QUOTES;
 
 			} else {
 				quote_type = q;
 			}
 
-			goto end_loop;
+			goto loop_end;
 
 		} else if (*ret.ptr == '\\' && quote_type == NO_QUOTES) {
 			// since we are outside quotes, we
@@ -32,13 +32,13 @@ arg_t goto_whitespace(const arg_t arg) {
 			ret.len--;
 			ret.asz--;
 
-			goto end_loop;
+			goto loop_end;
 
-		} else if (quote_type == NO_QUOTES && isspace(*ret.ptr)) {
-			break;
-		}
+		} else if (quote_type == NO_QUOTES && isspace(*ret.ptr)) break;
 
-		end_loop: {
+		loop_end: {
+			if (!ret.len) break;
+
 			ret.ptr++;
 			ret.len--;
 			ret.asz--;
@@ -60,14 +60,36 @@ arg_t skip_whitespace(const arg_t arg) {
 
 	return ret;
 }
-
+#include <stdio.h>
 // cap the args length to the nearest whitespace
 arg_t cap_to_white(const arg_t arg) {
 	arg_t  ret = arg;
 	size_t i = 0;
+	char quote_type = NO_QUOTES;
 
-	while (!isspace(ret.ptr[i]) && i < arg.len) {
-		i++;
+	while (i < arg.len) {
+		char q = QUOTE_T(ret.ptr[i]);
+
+		if (q != NO_QUOTES) {
+			if (quote_type != NO_QUOTES) {
+				if (quote_type == q) quote_type = NO_QUOTES;
+
+			} else {
+				quote_type = q;
+			}
+
+			goto loop_end;
+
+		} else if (ret.ptr[i] == '\\' && quote_type == NO_QUOTES) {
+			i++;
+			goto loop_end;
+
+		} else if (isspace(ret.ptr[i]) && quote_type == NO_QUOTES) break;
+
+		loop_end: {
+			if (i >= arg.len) break;
+			i++;
+		}
 	}
 
 	ret.len = i;

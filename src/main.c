@@ -119,36 +119,40 @@ int parse_arg(arg_t *dest, arg_t src) {
 
 			// home dir on start
 			case '~': {
-				if (quote_type == QUOTE_SIN) goto copy_memory;
+				if (quote_type == QUOTE_SIN || dest->len != 0) goto copy_memory;
 
-				if (dest->len == 0) {
-					char *env = getenv("HOME");
-					if (!env) goto copy_memory;
+				char *env = getenv("HOME");
+				if (!env) goto copy_memory;
 
-					size_t env_len = strlen(env);
-					if ((dest->len + env_len) >= dest->asz) {
-						if (alloc_arg(dest, MAX(env_len, ARGV_ASZ)) != 0) return 1;
-					}
+				size_t env_len = strlen(env);
+				if ((dest->len + env_len) >= dest->asz) {
+					if (alloc_arg(dest, MAX(env_len, ARGV_ASZ)) != 0) return 1;
+				}
 
-					dest->len += snprintf(dest->ptr + dest->len,
-						dest->asz - dest->len,
-						"%.*s", (int)env_len, env);
+				dest->len += snprintf(dest->ptr + dest->len,
+					dest->asz - dest->len,
+					"%.*s", (int)env_len, env);
 
-					++src_i;
-
-				} else goto copy_memory;
-
+				++src_i;
 				continue;
+			}
+
+			case '\\': {
+				if (quote_type != NO_QUOTES) goto copy_memory;
+				++src_i;
+
+				goto copy_memory;
 			}
 
 			default: {
 				goto copy_memory;
-
 				break;
 			}
 		}
 
 		copy_memory: {
+			if (src_i >= src.len) break;
+
 			char char_quote = QUOTE_T(src.ptr[src_i]);
 
 			if (char_quote) {
@@ -186,6 +190,10 @@ int parse_arg(arg_t *dest, arg_t src) {
 int read_fd_line(arg_t *dest, int fd) {
 	size_t i = 0;
 	char  ch = 0;
+
+	// here, the terminal should be raw and echo-less, and
+	// input would be handled dynamically, such as opening
+	// a prompt for missing quotes or unfinished backslashes
 
 	ssize_t r = 0;
 	while (1) {
