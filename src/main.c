@@ -328,8 +328,9 @@ int main(int argc, char *argv[], char *envp[]) {
 		arg_t remade = {0};
 		if (remake_arg(&remade, input) != 0) return 1;
 
-		arg_t     work = remade;
-		int child_argc = 0;
+		arg_t       work = remade;
+		int   child_argc = 0;
+		bool break_early = false;
 
 		while (work.len) {
 			if ((size_t)(child_argc + 1) >= (child_argv.asz / sizeof(arg_t))) {
@@ -344,12 +345,10 @@ int main(int argc, char *argv[], char *envp[]) {
 
 			if (parse_arg(&child_argv.ptr[child_argc], cmd_arg) != 0) return 1;
 
-			// end early if the arg is empty
-			if (arg_empty(child_argv.ptr[child_argc]) ||
-				EMPTY_C(*child_argv.ptr[child_argc].ptr)) {
-
-					free_arg(&child_argv.ptr[child_argc]);
-					break;
+			// end early if fully empty stuff
+			if (arg_empty(child_argv.ptr[child_argc])) {
+				if (break_early) break;
+				break_early = true;
 			}
 
 			child_argc++;
