@@ -201,7 +201,7 @@ int export_keyword(const int argc, const char *argv[]) {
 
 		if (eq) *eq = '\0';
 
-		if (eq && !strcmp(argv[i], "PATH")) refresh_path();
+		if (!strncmp(argv[i], "PATH", 4)) refresh_path();
 
 		if (setenv(argv[i], eq ? eq + 1 : "", true) != 0) {
 			fprintf(stderr, "%s: failed to set environment variable \"%s\": %s\n",

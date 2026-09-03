@@ -1,6 +1,7 @@
 #ifndef ARG_H
 #define ARG_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <ctype.h>
 
@@ -57,20 +58,20 @@ arg_t skip_whitespace(const arg_t arg);
 arg_t cap_to_white(const arg_t arg);
 
 // (re)allocates a pointer for an arg
-int alloc_arg(arg_t *arg, const size_t sz);
+bool alloc_arg(arg_t *arg, const size_t sz);
 
 // see if an arg is empty
 // return 1 on yes
-int arg_empty(arg_t arg);
+bool arg_empty(arg_t arg);
 
 // (re)allocate a arg_t pointer for a list
 // this allocates the number of indexes on the list,
 // not the actual items
-int alloc_arg_arr(arg_arr_t *arr, size_t sz);
+bool alloc_arg_arr(arg_arr_t *arr, size_t sz);
 
 // compare two args
 // same logic as strcmp
-int arg_cmp(const arg_t one, const arg_t two);
+bool arg_cmp(const arg_t one, const arg_t two);
 
 // make an arg from just a string
 arg_t make_arg(const char *str);
@@ -91,7 +92,7 @@ void free_arg_arr(arg_arr_t *arr);
 
 // copy an arg to another, automatically
 // (re)allocating memory
-int arg_cpy(arg_t *dest, arg_t src);
+bool arg_cpy(arg_t *dest, arg_t src);
 
 // like strchr, but the field is
 // an arg (limits itself to the length)
@@ -115,6 +116,6 @@ arg_t cap_to_char(const arg_t arg, const char c);
 arg_t shift_arg_c(arg_t arg, const char c);
 
 // append an arg to another, allocating if needed
-int append_arg(arg_t *dest, const arg_t src);
+bool append_arg(arg_t *dest, const arg_t src);
 
 #endif

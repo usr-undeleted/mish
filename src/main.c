@@ -240,14 +240,12 @@ int remake_arg(arg_t *dest, const arg_t src) {
 			if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
 		}
 
-		// here, globbing should take priority over any
-		// alias check
-		// also, note that any form of globbing would naturally
-		// set 'aliased' to false
+		arg_t arg = cap_to_white(shift_arg(src, src_i));
 
+		// aliases
 		if (aliased == false && !EMPTY_C(src.ptr[src_i])) {
 			// make the alias
-			arg_t alias = find_alias(cap_to_white(shift_arg(src, src_i)), NULL);
+			arg_t alias = find_alias(arg, NULL);
 
 			// put it in the dest
 			if ((dest->len + alias.len) >= dest->asz) {
@@ -361,7 +359,6 @@ int main(int argc, char *argv[], char *envp[]) {
 		// turn into regular argv
 		char **passed_argv = calloc(sizeof(passed_argv[0]), child_argc + 1);
 		if (!passed_argv) return 1;
-		memset(passed_argv, '\0', sizeof(passed_argv[0]) * (child_argc + 1));
 
 		for (int i = 0; i < child_argc; i++) {
 			passed_argv[i] = child_argv.ptr[i].ptr;

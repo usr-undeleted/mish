@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -5,7 +6,7 @@
 #include "arg.h"
 
 // make a new arg, going to the nearest whitespace
-arg_t goto_whitespace(const arg_t arg) {
+inline arg_t goto_whitespace(const arg_t arg) {
 	arg_t ret = arg;
 	char quote_type = NO_QUOTES;
 
@@ -23,8 +24,6 @@ arg_t goto_whitespace(const arg_t arg) {
 				quote_type = q;
 			}
 
-			goto loop_end;
-
 		} else if (*ret.ptr == '\\' && quote_type == NO_QUOTES) {
 			// since we are outside quotes, we
 			// skip a character
@@ -32,24 +31,20 @@ arg_t goto_whitespace(const arg_t arg) {
 			ret.len--;
 			ret.asz--;
 
-			goto loop_end;
+		} else if (quote_type == NO_QUOTES && EMPTY_C(*ret.ptr)) break;
 
-		} else if (quote_type == NO_QUOTES && isspace(*ret.ptr)) break;
+		if (!ret.len) break;
 
-		loop_end: {
-			if (!ret.len) break;
-
-			ret.ptr++;
-			ret.len--;
-			ret.asz--;
-		}
+		ret.ptr++;
+		ret.len--;
+		ret.asz--;
 	}
 
 	return ret;
 }
 
 // make a new arg, skipping whitespace
-arg_t skip_whitespace(const arg_t arg) {
+inline arg_t skip_whitespace(const arg_t arg) {
 	arg_t ret = arg;
 
 	while (isspace(*ret.ptr) && ret.len) {
@@ -60,9 +55,9 @@ arg_t skip_whitespace(const arg_t arg) {
 
 	return ret;
 }
-#include <stdio.h>
+
 // cap the args length to the nearest whitespace
-arg_t cap_to_white(const arg_t arg) {
+inline arg_t cap_to_white(const arg_t arg) {
 	arg_t  ret = arg;
 	size_t i = 0;
 	char quote_type = NO_QUOTES;
@@ -78,18 +73,13 @@ arg_t cap_to_white(const arg_t arg) {
 				quote_type = q;
 			}
 
-			goto loop_end;
-
 		} else if (ret.ptr[i] == '\\' && quote_type == NO_QUOTES) {
 			i++;
-			goto loop_end;
 
-		} else if (isspace(ret.ptr[i]) && quote_type == NO_QUOTES) break;
+		} else if (EMPTY_C(ret.ptr[i]) && quote_type == NO_QUOTES) break;
 
-		loop_end: {
-			if (i >= arg.len) break;
-			i++;
-		}
+		if (i >= arg.len) break;
+		i++;
 	}
 
 	ret.len = i;
@@ -99,7 +89,7 @@ arg_t cap_to_white(const arg_t arg) {
 }
 
 // cap an arg to a specific char
-arg_t cap_to_char(const arg_t arg, const char c) {
+inline arg_t cap_to_char(const arg_t arg, const char c) {
 	arg_t  ret = arg;
 	size_t i = 0;
 
@@ -114,7 +104,9 @@ arg_t cap_to_char(const arg_t arg, const char c) {
 }
 
 // (re)allocates a pointer for an arg
-int alloc_arg(arg_t *arg, const size_t sz) {
+inline bool alloc_arg(arg_t *arg, const size_t sz) {
+	if (!arg) return 1;
+
 	arg->ptr = realloc(arg->ptr, arg->asz + sz);
 	if (!arg->ptr) return 1;
 
@@ -126,7 +118,7 @@ int alloc_arg(arg_t *arg, const size_t sz) {
 
 // see if an arg is empty
 // return 1 on yes
-int arg_empty(arg_t arg) {
+inline bool arg_empty(arg_t arg) {
 	for (size_t i = 0; i < arg.len; i++) {
 		if (!isspace(arg.ptr[i]) || !arg.ptr[i]) return 0;
 	}
@@ -136,7 +128,7 @@ int arg_empty(arg_t arg) {
 
 // (re)allocate a arg_t pointer for a list
 // multiplies sz by sizeof(arg_t)
-int alloc_arg_arr(arg_arr_t *arr, size_t sz) {
+inline bool alloc_arg_arr(arg_arr_t *arr, size_t sz) {
 	if (!arr) return 1;
 
 	arr->ptr = realloc(arr->ptr, (arr->asz + sz) * sizeof(arg_t));
@@ -150,7 +142,7 @@ int alloc_arg_arr(arg_arr_t *arr, size_t sz) {
 
 // compare two args
 // same logic as strcmp
-int arg_cmp(const arg_t one, const arg_t two) {
+inline bool arg_cmp(const arg_t one, const arg_t two) {
     if (one.len != two.len) return 1;
 
     if (strncmp(one.ptr, two.ptr, MAX(one.len, two.len))) return 1;
@@ -159,7 +151,7 @@ int arg_cmp(const arg_t one, const arg_t two) {
 }
 
 // make an arg from just a string
-arg_t make_arg(const char *str) {
+inline arg_t make_arg(const char *str) {
     size_t len = strlen(str);
 
     arg_t ret = {
@@ -171,20 +163,20 @@ arg_t make_arg(const char *str) {
     return ret;
 }
 
-void free_arg(arg_t *arg) {
-	if (arg->ptr) free(arg->ptr);
+inline void free_arg(arg_t *arg) {
+	if (arg->ptr && arg->asz) free(arg->ptr);
 	memset(arg, '\0', sizeof(arg_t));
 }
 
 // doesn't free, only zeroes out memory
-void zero_arg(arg_t *arg) {
+inline void zero_arg(arg_t *arg) {
 	if (arg->ptr) memset(arg->ptr, '\0', arg->asz);
 	arg->len = 0;
 }
 
 // same logic as zero_arg
 // also sets icnt to 0
-void zero_arg_arr(arg_arr_t *arr) {
+inline void zero_arg_arr(arg_arr_t *arr) {
 	for (size_t i = 0; i < arr->icnt; i++) {
 		zero_arg(&arr->ptr[i]);
 	}
@@ -192,7 +184,7 @@ void zero_arg_arr(arg_arr_t *arr) {
 }
 
 // free every item on array
-void free_arg_arr(arg_arr_t *arr) {
+inline void free_arg_arr(arg_arr_t *arr) {
 	for (size_t i = 0; i < arr->icnt; i++) {
 		if (arr->ptr) free(arr->ptr);
 	}
@@ -202,7 +194,7 @@ void free_arg_arr(arg_arr_t *arr) {
 
 // copy an arg to another, automatically
 // (re)allocating memory
-int arg_cpy(arg_t *dest, const arg_t src) {
+inline bool arg_cpy(arg_t *dest, const arg_t src) {
 	if (!dest) return 1;
 
 	if (src.len > dest->asz) {
@@ -218,7 +210,7 @@ int arg_cpy(arg_t *dest, const arg_t src) {
 
 // like strchr, but the field is
 // an arg (limits itself to the length)
-char *arg_chr(const arg_t arg, const char ch) {
+inline char *arg_chr(const arg_t arg, const char ch) {
 	for (size_t i = 0; i < arg.len; i++) {
 		if (arg.ptr[i] == ch) return arg.ptr + i;
 	}
@@ -230,7 +222,7 @@ char *arg_chr(const arg_t arg, const char ch) {
 // offset, shifting to the right only
 // note that this shifts the pointer to
 // at max its length
-arg_t shift_arg(arg_t arg, const size_t off) {
+inline arg_t shift_arg(arg_t arg, const size_t off) {
 	arg.len -= MIN(arg.len, off);
 	arg.asz -= MIN(arg.len, off);
 	arg.ptr += MIN(arg.len, off);
@@ -240,7 +232,7 @@ arg_t shift_arg(arg_t arg, const size_t off) {
 
 // same logic as shift_arg(), but shifts
 // until a specific char (or until it can't anymore)
-arg_t shift_arg_c(arg_t arg, const char c) {
+inline arg_t shift_arg_c(arg_t arg, const char c) {
 	size_t i = 0;
 
 	while (i < arg.len && arg.ptr[i] != c) i++;
@@ -254,14 +246,14 @@ arg_t shift_arg_c(arg_t arg, const char c) {
 
 // move an index of an arg to the right until
 // it hits an empty character
-void idx_to_white(size_t *i, const arg_t arg) {
+inline void idx_to_white(size_t *i, const arg_t arg) {
 	if (!i) return;
 
 	while (*i < arg.len && !EMPTY_C(arg.ptr[*i])) (*i)++;
 }
 
 // append an arg to another, allocating if needed
-int append_arg(arg_t *dest, const arg_t src) {
+inline bool append_arg(arg_t *dest, const arg_t src) {
 	if (!dest) return 1;
 
 	if ((dest->len + src.len) > dest->asz) {

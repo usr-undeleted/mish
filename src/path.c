@@ -19,7 +19,8 @@ arg_arr_t known_paths = {0};
 void clear_list(void) {
     for (size_t i = 0; i < known_paths.icnt; i++) {
         if (!known_paths.ptr[i].ptr) continue;
-        memset(known_paths.ptr[i].ptr, '\0', known_paths.ptr[i].asz);
+        //memset(known_paths.ptr[i].ptr, '\0', known_paths.ptr[i].asz);
+        zero_arg(&known_paths.ptr[i]);
     }
 
     known_paths.icnt = 0;
