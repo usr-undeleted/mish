@@ -17,7 +17,7 @@
 #define KEY_FULL_ERR    2
 
 // relates a string to a keyword
-int find_keyword(const char *str) {
+int find_keyword(char *str) {
     if (!strcmp(str, EXIT_KEYWORD_S)) {
         return EXIT_KEYWORD_N;
 
@@ -61,7 +61,7 @@ int exit_keyword(void) {
     return KEY_SUCCESS;
 }
 
-int which_keyword(const int argc, const char *argv[]) {
+int which_keyword(int argc, char *argv[]) {
 	if (argc < 2) {
 		fprintf(stderr, "%s: not 'nuff arguments.\n", WHICH_KEYWORD_S);
 		fflush(stderr);
@@ -106,7 +106,7 @@ int which_keyword(const int argc, const char *argv[]) {
 	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
 }
 
-int echo_keyword(const int argc, const char *argv[]) {
+int echo_keyword(int argc, char *argv[]) {
 	int i = 1;
 	while (i < argc) {
 		printf("%s", argv[i++]);
@@ -119,7 +119,7 @@ int echo_keyword(const int argc, const char *argv[]) {
 	return KEY_SUCCESS;
 }
 
-int cd_keyword(const int argc, const char *argv[]) {
+int cd_keyword(int argc, char *argv[]) {
 	bool err = false;
 
 	if (argc < 2) {
@@ -160,9 +160,9 @@ int pwd_keyword(void) {
 	return KEY_SUCCESS;
 }
 
-int env_keyword(const char *envp[]) {
+int env_keyword(char *envp[]) {
 	while (*envp) {
-		const arg_t env = make_arg(*envp);
+		arg_t env = make_arg(*envp);
 
 		// label and equal
 		arg_t prev = cap_to_char(env, '=');
@@ -181,7 +181,7 @@ int env_keyword(const char *envp[]) {
 	return KEY_SUCCESS;
 }
 
-int export_keyword(const int argc, const char *argv[]) {
+int export_keyword(int argc, char *argv[]) {
 	if (argc < 2) {
 		fprintf(stderr, "%s: not 'nuff arguments.\n", EXPORT_KEYWORD_S);
 		fflush(stderr);
@@ -218,7 +218,7 @@ int export_keyword(const int argc, const char *argv[]) {
 	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
 }
 
-int unset_keyword(const int argc, const char *argv[]) {
+int unset_keyword(int argc, char *argv[]) {
 	bool err = false;
 	if (argc < 2) {
 		fprintf(stderr, "%s: not 'nuff arguments.\n", UNSET_KEYWORD_S);
@@ -255,7 +255,7 @@ int path_keyword(void) {
 	return KEY_SUCCESS;
 }
 
-int alias_keyword(const int argc, const char *argv[]) {
+int alias_keyword(int argc, char *argv[]) {
 	bool err = false;
 	if (argc < 2) {
 		// print every alias
@@ -307,7 +307,7 @@ int alias_keyword(const int argc, const char *argv[]) {
 	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
 }
 
-int unalias_keyword(const int argc, const char **argv) {
+int unalias_keyword(int argc, char **argv) {
 	bool err = false;
 	if (argc < 2) {
 		fprintf(stderr, "%s: not 'nuff arguments.\n", UNALIAS_KEYWORD_S);

@@ -12,6 +12,7 @@
 
 #include "alias.h"
 #include "arg.h"
+#include "exec.h"
 #include "keyword.h"
 #include "path.h"
 
@@ -271,6 +272,8 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	// make $PATH
 	refresh_path();
+	// stuff
+	global_argv0 = argv[0];
 
 	// i have to figure out input like this in order to process stuff like
 	// arrow keys! only problem would be unicode... but im sure i could figure
@@ -363,121 +366,12 @@ int main(int argc, char *argv[], char *envp[]) {
 			passed_argv[i] = child_argv.ptr[i].ptr;
 		}
 
-		// try keywords
-		int key = find_keyword(passed_argv[0]);
-		if (key != NOT_A_KEYWORD) {
-			switch (key) {
-				case EXIT_KEYWORD_N: {
-					status = exit_keyword();
-					break;
-				}
+		status = execute(child_argc, passed_argv, envp, 0);
 
-				case WHICH_KEYWORD_N: {
-					status = which_keyword(child_argc, (const char **)passed_argv);
-					break;
-				}
-
-				case ECHO_KEYWORD_N: {
-					status = echo_keyword(child_argc, (const char **)passed_argv);
-					break;
-				}
-
-				case CD_KEYWORD_N: {
-					status = cd_keyword(child_argc, (const char **)passed_argv);
-					break;
-				}
-
-				case PWD_KEYWORD_N: {
-					status = pwd_keyword();
-					break;
-				}
-
-				case ENV_KEYWORD_N: {
-					status = env_keyword((const char **)envp);
-					break;
-				}
-
-				case EXPORT_KEYWORD_N: {
-					status = export_keyword(child_argc, (const char **)passed_argv);
-					break;
-				}
-
-				case UNSET_KEYWORD_N: {
-					status = unset_keyword(child_argc, (const char **)passed_argv);
-					break;
-				}
-
-				case PATH_KEYWORD_N: {
-					status = path_keyword();
-					break;
-				}
-
-				case ALIAS_KEYWORD_N: {
-					status = alias_keyword(child_argc, (const char **)passed_argv);
-					break;
-				}
-
-				case UNALIAS_KEYWORD_N: {
-					status = unalias_keyword(child_argc, (const char **)passed_argv);
-					break;
-				}
-
-				default: {
-					status = 127;
-					fprintf(stderr, "%s: unhandled keyword %d (internal).\n",
-						basename(argv[0]), key);
-					fflush(stderr);
-					break;
-				}
-			}
-
-			goto end_loop;
-		}
-
-		char *bin_path = fetch_from_path(child_argv.ptr[0]);
-		if (!bin_path) {
-			if (!IS_A_PATH(*child_argv.ptr[0].ptr)) {
-				fprintf(stderr, "%s: couldn't execute \"%s\": Unknown binary\n",
-					basename(argv[0]), child_argv.ptr[0].ptr);
-				fflush(stderr);
-				goto end_loop;
-
-			} else {
-				bin_path = passed_argv[0];
-			}
-		}
-
-		pid_t child = fork();
-
-		switch (child) {
-			case -1: {
-				return 1;
-				break;
-			}
-
-			case 0: {
-				execve(bin_path, passed_argv, envp);
-
-				fprintf(stderr, "%s: couldn't execute \"%s\": %s\n",
-					basename(argv[0]), bin_path, strerror(errno));
-	   			fflush(stderr);
-				return 0;
-
-				break;
-			}
-
-			default: {
-				while (waitpid(child, &status, WNOHANG) != -1) {};
-				break;
-			}
-		}
-
-		end_loop: {
-			zero_arg_arr(&child_argv);
-			zero_arg(&input);
-			free_arg(&remade);
-			if (!isatty(STDIN_FILENO)) break;
-		}
+		zero_arg_arr(&child_argv);
+		zero_arg(&input);
+		free_arg(&remade);
+		if (!isatty(STDIN_FILENO)) break;
 	}
 
 	free_arg_arr(&child_argv);

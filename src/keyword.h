@@ -4,29 +4,29 @@
 #include <stdbool.h>
 
 // relates a string to a keyword
-int find_keyword(const char *str);
+int find_keyword(char *str);
 
 int exit_keyword(void);
 
-int which_keyword(const int argc, const char *argv[]);
+int which_keyword(int argc, char *argv[]);
 
-int echo_keyword(const int argc, const char *argv[]);
+int echo_keyword(int argc, char *argv[]);
 
-int cd_keyword(const int argc, const char *argv[]);
+int cd_keyword(int argc, char *argv[]);
 
 int pwd_keyword(void);
 
-int env_keyword(const char **envp);
+int env_keyword(char **envp);
 
-int export_keyword(const int argc, const char *argv[]);
+int export_keyword(int argc, char *argv[]);
 
-int unset_keyword(const int argc, const char *argv[]);
+int unset_keyword(int argc, char *argv[]);
 
 int path_keyword(void);
 
-int alias_keyword(const int argc, const char *argv[]);
+int alias_keyword(int argc, char *argv[]);
 
-int unalias_keyword(const int argc, const char *argv[]);
+int unalias_keyword(int argc, char *argv[]);
 
 #define NOT_A_KEYWORD 0
 
