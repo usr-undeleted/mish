@@ -118,4 +118,11 @@ arg_t shift_arg_c(arg_t arg, const char c);
 // append an arg to another, allocating if needed
 bool append_arg(arg_t *dest, const arg_t src);
 
+// append an arg_t to an arg_arr_t
+//
+// will overwrite entries with asz == 0
+//
+// sz relates to the allocation size used
+bool append_arg_to_arr(arg_arr_t *arr, const arg_t item, const size_t sz);
+
 #endif

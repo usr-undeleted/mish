@@ -9,17 +9,6 @@
 // to how free_arg naturally works
 arg_arr_t aliases = {0};
 
-// find an index inside of the list
-// this can be either a freed arg (asz = 0) or
-// the last item in the list
-size_t find_list_idx(void) {
-	size_t ret = 0;
-
-	while (ret < aliases.icnt && aliases.ptr[ret].asz != 0) ret++;
-
-	return ret;
-}
-
 // find an alias and return the pointer
 arg_t *alias_exists(const arg_t name) {
 	for (size_t i = 0; i < aliases.icnt; i++) {
@@ -47,35 +36,15 @@ arg_t find_alias(const arg_t name, int *status) {
 }
 
 int new_alias(const arg_t label, const arg_t cmd) {
-	// see if that alias wasn't taken already
-	arg_t *ptr =  alias_exists(label);
+	// make the full alias
+	arg_t tmp = {0};
+	if (append_arg(&tmp, label) != 0) return 1;
+	if (append_arg(&tmp, make_arg("=")) != 0) return 1;
+	if (append_arg(&tmp, cmd) != 0) return 1;
 
-	if (!ptr) {
-		// alias doesn't exist yet
-		size_t i = find_list_idx();
+	if (append_arg_to_arr(&aliases, tmp, ALLOC_SZ)) return 1;
 
-		// if the idx is at the end of the list, and we would need more allocation
-		if (i == aliases.icnt && (aliases.icnt + 1) >= (aliases.asz / sizeof(arg_t))) {
-			if (alloc_arg_arr(&aliases, ALLOC_SZ)) return 1;
-		}
-
-		ptr = &aliases.ptr[aliases.icnt];
-		free_arg(ptr);
-		if (append_arg(ptr, label)) return 1;
-		if (append_arg(ptr, make_arg("="))) return 1;
-		if (append_arg(ptr, cmd)) return 1;
-
-		aliases.icnt++;
-
-	} else {
-		// alias is in middle of list, replace it
-		zero_arg(ptr);
-		if (append_arg(ptr, label)) return 1;
-		if (append_arg(ptr, make_arg("="))) return 1;
-		if (append_arg(ptr, cmd)) return 1;
-
-	}
-
+	free_arg(&tmp);
 	return 0;
 }
 

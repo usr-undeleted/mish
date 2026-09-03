@@ -265,3 +265,29 @@ inline bool append_arg(arg_t *dest, const arg_t src) {
 
 	return 0;
 }
+#include <stdio.h>
+inline bool append_arg_to_arr(arg_arr_t *arr, const arg_t item, const size_t sz) {
+	if (!arr) return 1;
+	// find usable idx
+	size_t i = 0;
+	while (i < arr->icnt && arr->ptr[i].asz != 0) i++;
+
+	if (i == arr->icnt) {
+		// if the idx is at the end of the list, and we would need more allocation
+		if ((arr->icnt + 1) >= (arr->asz / sizeof(arg_t))) {
+			if (alloc_arg_arr(arr, sz)) return 1;
+		}
+
+		zero_arg(&arr->ptr[arr->icnt]);
+		if (append_arg(&arr->ptr[arr->icnt], item)) return 1;
+
+		++arr->icnt;
+
+	} else {
+		// item in middle of list
+		zero_arg(&arr->ptr[i]);
+		if (append_arg(&arr->ptr[i], item)) return 1;
+	}
+
+	return 0;
+}
