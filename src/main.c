@@ -1,7 +1,6 @@
 #include <limits.h>
 #include <stddef.h>
 #include <termios.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -13,10 +12,11 @@
 #include "alias.h"
 #include "arg.h"
 #include "exec.h"
-#include "keyword.h"
 #include "path.h"
 
 #define ARGV_ARR_ASZ 8
+
+// TODO: globbin' (globbing, if you don't like having fun...)
 
 // find the equivalent closer for the opener
 // returns null on failure to find the closer, or when the
