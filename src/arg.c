@@ -120,7 +120,7 @@ inline bool alloc_arg(arg_t *arg, const size_t sz) {
 // return 1 on yes
 inline bool arg_empty(arg_t arg) {
 	for (size_t i = 0; i < arg.len; i++) {
-		if (!isspace(arg.ptr[i]) || !arg.ptr[i]) return 0;
+		if (!EMPTY_C(arg.ptr[i]) || !arg.ptr[i]) return 0;
 	}
 
 	return 1;
@@ -265,7 +265,7 @@ inline bool append_arg(arg_t *dest, const arg_t src) {
 
 	return 0;
 }
-#include <stdio.h>
+
 inline bool append_arg_to_arr(arg_arr_t *arr, const arg_t item, const size_t sz) {
 	if (!arr) return 1;
 	// find usable idx

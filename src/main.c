@@ -333,7 +333,6 @@ int main(int argc, char *argv[], char *envp[]) {
 
 		arg_t       work = remade;
 		int   child_argc = 0;
-		bool break_early = false;
 
 		while (work.len) {
 			if ((size_t)(child_argc + 1) >= (child_argv.asz / sizeof(arg_t))) {
@@ -350,13 +349,17 @@ int main(int argc, char *argv[], char *envp[]) {
 
 			// end early if fully empty stuff
 			if (arg_empty(child_argv.ptr[child_argc])) {
-				if (break_early) break;
-				break_early = true;
+				goto skip;
 			}
 
 			child_argc++;
-			work = goto_whitespace(work);
+
+			skip: {
+				work = goto_whitespace(work);
+			}
 		}
+
+		if (!child_argc) goto loop_end;
 
 		// turn into regular argv
 		char **passed_argv = calloc(sizeof(passed_argv[0]), child_argc + 1);
@@ -368,10 +371,12 @@ int main(int argc, char *argv[], char *envp[]) {
 
 		status = execute(child_argc, passed_argv, envp, 0);
 
-		zero_arg_arr(&child_argv);
-		zero_arg(&input);
-		free_arg(&remade);
-		if (!isatty(STDIN_FILENO)) break;
+		loop_end: {
+			zero_arg_arr(&child_argv);
+			zero_arg(&input);
+			free_arg(&remade);
+			if (!isatty(STDIN_FILENO)) break;
+		}
 	}
 
 	free_arg_arr(&child_argv);
