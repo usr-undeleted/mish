@@ -11,6 +11,7 @@
 #include "arg.h"
 #include "path.h"
 #include "alias.h"
+#include "envp.h"
 
 #define KEY_SUCCESS     0
 #define KEY_PARTIAL_ERR 1
@@ -201,11 +202,11 @@ int export_keyword(int argc, char *argv[]) {
 
 		if (eq) *eq = '\0';
 
-		if (!strncmp(argv[i], "PATH", 4)) refresh_path();
+		if (!strncmp(argv[i], "PATH=", 5)) refresh_path();
 
-		if (setenv(argv[i], eq ? eq + 1 : "", true) != 0) {
-			fprintf(stderr, "%s: failed to set environment variable \"%s\": %s\n",
-				EXPORT_KEYWORD_S, argv[i], strerror(errno));
+		if (export_env(argv[i], eq ? eq + 1 : "") != 0) {
+			fprintf(stderr, "%s: failed to export environment variable \"%s\".\n",
+				EXPORT_KEYWORD_S, argv[i]);
 			err = true;
 			continue;
 		}
@@ -228,9 +229,9 @@ int unset_keyword(int argc, char *argv[]) {
 
 	for (int i = 1; i < argc; i++) {
 		fprintf(stderr, "");
-		if (unsetenv(argv[i]) != 0) {
-			fprintf(stderr, "%s: failed to unset environment variable \"%s\": %s\n",
-				EXPORT_KEYWORD_S, argv[i], strerror(errno));
+		if (unset_env(argv[i]) != 0) {
+			fprintf(stderr, "%s: failed to unset environment variable \"%s\".\n",
+				EXPORT_KEYWORD_S, argv[i]);
 			err = true;
 			continue;
 		}

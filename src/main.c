@@ -11,12 +11,20 @@
 
 #include "alias.h"
 #include "arg.h"
+#include "envp.h"
 #include "exec.h"
 #include "path.h"
 
 #define ARGV_ARR_ASZ 8
 
 // TODO: globbin' (globbing, if you don't like having fun...)
+// TODO: user input has to be non-canonical and respond immediately
+// to key presses, to process everything
+// TODO: ignore ctrl-c and other commands
+// TODO: command expansion
+// TODO: &&, ||, <, >, |, etc
+//
+// future TODO: logic (while, if, for, etc), make it C-like
 
 // find the equivalent closer for the opener
 // returns null on failure to find the closer, or when the
@@ -89,7 +97,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 
 						// make sure to skip everything from the source
 						src_i += strlen(start) + 2;
-						char *env = getenv(start);
+						char *env = shell_get_env(start);
 						if (!env) {
 							break;
 						};
@@ -122,7 +130,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 			case '~': {
 				if (quote_type == QUOTE_SIN || dest->len != 0) goto copy_memory;
 
-				char *env = getenv("HOME");
+				char *env = shell_get_env("HOME");
 				if (!env) goto copy_memory;
 
 				size_t env_len = strlen(env);
@@ -215,16 +223,6 @@ int read_fd_line(arg_t *dest, int fd) {
 	return 0;
 }
 
-/*
-// original terminal options
-struct termios original_term = {0};
-
-// return terminal to normal
-void restore_term(void) {
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_term);
-}
-*/
-
 // remake an arg (like input), doing the following:
 // 1. replacing the immediate first argument with an alias
 // 2. (to be added) globbing files
@@ -272,34 +270,11 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	// make $PATH
 	refresh_path();
+	// make the envp passed down to children
+	if (make_child_envp((const char **)envp)) return 1;
+
 	// stuff
 	global_argv0 = argv[0];
-
-	// i have to figure out input like this in order to process stuff like
-	// arrow keys! only problem would be unicode... but im sure i could figure
-	// something out with a macro
-	/*
-	// switch term options
-	// get original options
-	if (tcgetattr(STDIN_FILENO, &original_term) != 0) {
-		fprintf(stderr, "%s: failed to get original terminal configuration: %s\n",
-			basename(argv[0]), strerror(errno));
-		return 1;
-	}
-	atexit(restore_term);
-
-	// make new
-	struct termios new_term = original_term;
-	// non canonical and no echo
-	new_term.c_cflag &= ~(ICANON | ECHO);
-	new_term.c_cc[VMIN]  = 1;
-	new_term.c_cc[VTIME] = 0;
-	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_term) != 0) {
-		fprintf(stderr, "%s: failed to set new terminal configuration: %s\n",
-			basename(argv[0]), strerror(errno));
-		return 1;
-	}
-	*/
 
 	int           status = 0;
 	arg_t          input = {0};
@@ -340,10 +315,10 @@ int main(int argc, char *argv[], char *envp[]) {
 			}
 
 			work = skip_whitespace(work);
-			if (arg_empty(work)) break;
 
 			// limits size to whitespace
 			arg_t cmd_arg = cap_to_white(work);
+			if (arg_empty(cmd_arg)) break;
 
 			if (parse_arg(&child_argv.ptr[child_argc], cmd_arg) != 0) return 1;
 
@@ -369,12 +344,15 @@ int main(int argc, char *argv[], char *envp[]) {
 			passed_argv[i] = child_argv.ptr[i].ptr;
 		}
 
-		status = execute(child_argc, passed_argv, envp, 0);
+		status = execute(child_argc, passed_argv, child_envp.dp, 0);
 
 		loop_end: {
 			zero_arg_arr(&child_argv);
 			zero_arg(&input);
 			free_arg(&remade);
+			// passed_argv doesn't get freed
+
+			// yes, i know this isn't the right thing...
 			if (!isatty(STDIN_FILENO)) break;
 		}
 	}

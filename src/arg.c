@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <ctype.h>
 
 #include "arg.h"
@@ -119,6 +120,8 @@ inline bool alloc_arg(arg_t *arg, const size_t sz) {
 // see if an arg is empty
 // return 1 on yes
 inline bool arg_empty(arg_t arg) {
+	if (!arg.len) return 1;
+
 	for (size_t i = 0; i < arg.len; i++) {
 		if (!EMPTY_C(arg.ptr[i]) || !arg.ptr[i]) return 0;
 	}
@@ -252,6 +255,14 @@ inline void idx_to_white(size_t *i, const arg_t arg) {
 	while (*i < arg.len && !EMPTY_C(arg.ptr[*i])) (*i)++;
 }
 
+// an idx may be at the end of the list or
+// as an entry with asz = 0 in the middle
+size_t arr_usable_idx(const arg_arr_t arr) {
+	size_t i = 0;
+	while (i < arr.icnt && arr.ptr[i].asz != 0) i++;
+	return i;
+}
+
 // append an arg to another, allocating if needed
 inline bool append_arg(arg_t *dest, const arg_t src) {
 	if (!dest) return 1;
@@ -269,8 +280,7 @@ inline bool append_arg(arg_t *dest, const arg_t src) {
 inline bool append_arg_to_arr(arg_arr_t *arr, const arg_t item, const size_t sz) {
 	if (!arr) return 1;
 	// find usable idx
-	size_t i = 0;
-	while (i < arr->icnt && arr->ptr[i].asz != 0) i++;
+	size_t i = arr_usable_idx(*arr);
 
 	if (i == arr->icnt) {
 		// if the idx is at the end of the list, and we would need more allocation
@@ -290,4 +300,173 @@ inline bool append_arg_to_arr(arg_arr_t *arr, const arg_t item, const size_t sz)
 	}
 
 	return 0;
+}
+
+// free an entry from an arr by simply setting it
+// as usable (asz = 0)
+//
+// 0 on match, 1 on no match
+inline bool free_arr_entry(arg_arr_t *arr, const arg_t arg) {
+	for (size_t i = 0; i < arr->icnt; i++) {
+		if (!arg_cmp(arr->ptr[i], arg)) {
+			free_arg(&arr->ptr[i]);
+			if (i == (arr->icnt - 1)) --arr->icnt;
+
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+// "shift" variant of free(), using memmove()
+// to completely overwrite the old entry away.
+inline bool s_free_arr_entry(arg_arr_t *arr, const arg_t arg) {
+	for (size_t i = 0; i < arr->icnt; i++) {
+		if (!arg_cmp(arr->ptr[i], arg)) {
+			free_arg(&arr->ptr[i]);
+			memmove(&arr->ptr[i], &arr->ptr[i + 1], (arr->icnt - i) * sizeof(arg_t));
+			--arr->icnt;
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+// get the length of a string up to a char
+size_t str_len_c(const char *str, const char c) {
+	size_t i = 0;
+	while (*str != c && *str) {
+		str++;
+		i++;
+	}
+
+	return i;
+}
+
+// compare two strings only up until a char
+//
+// return 0 on exact match
+bool str_cmp_c(const char *one, const char *two, const char c) {
+	size_t len = str_len_c(one, c);
+	if (len != str_len_c(two, c)) return 1;
+
+	for (size_t i = 0; i < len; i++) {
+		if (one[i] != two[i]) return 1;
+	}
+
+	return 0;
+}
+
+// find an entry inside of a dblp
+//
+// sets status to true if it succeded, else, false
+size_t find_dblp_entry(const dbl_ptr_t dblp, const char *label, bool *status) {
+	*status = false;
+
+	for (size_t i = 0; i < dblp.icnt; i++) {
+		if (!strcmp(dblp.dp[i], label)) {
+			*status = true;
+			return i;
+		}
+	}
+
+	return 0;
+}
+
+// same logic as find_dblp_entry, but limits itself
+// to a specific char
+size_t find_dblp_entry_c(const dbl_ptr_t dblp, const char *label, bool *status, const char c) {
+	*status = false;
+
+	for (size_t i = 0; i < dblp.icnt; i++) {
+		if (!str_cmp_c(dblp.dp[i], label, c)) {
+			*status = true;
+			return i;
+		}
+	}
+
+	return 0;
+}
+
+// generic freeing of a double pointer list
+inline void free_dblp(dbl_ptr_t *arr) {
+	for (size_t i = 0; i < arr->icnt; i++) {
+		if (arr->dp[i]) free(arr->dp[i]);
+		arr->dp[i] = NULL;
+	}
+	arr->icnt = 0;
+}
+
+// append to a dblp array a pointer (only allocates size in the array)
+//
+// if p is NULL, add it, but don't increment icnt
+inline bool append_to_dblp(dbl_ptr_t *arr, const void *p, const size_t sz) {
+	// increase size if needed
+	if ((arr->icnt + 1) >= (arr->asz / sizeof(arr->dp[0]))) {
+		if (!(arr->dp = realloc(arr->dp, arr->asz + (sz * sizeof(arr->dp[0]))))) return 1;
+		memset(arr->dp + arr->asz, '\0', sz);
+		arr->asz += sz * sizeof(arr->dp[0]);
+	}
+
+	arr->dp[arr->icnt] = (void *)p;
+	if (p) arr->icnt++;
+
+	return 0;
+}
+
+// shorten the length of an arg
+//
+// if sz is too big for one of the length, set
+// it to zero
+inline arg_t shorten_arg(arg_t arg, const size_t sz) {
+	if (sz >= arg.len) arg.len -= sz;
+	else arg.len = 0;
+
+	return arg;
+}
+
+inline bool s_remove_dbpl_entry(dbl_ptr_t *arr, const char *str) {
+	if (!arr) return 1;
+
+	bool exists = false;
+	size_t i = find_dblp_entry(*arr, str, &exists);
+	if (exists == false) return 1;
+
+	memmove(&arr->dp[i], &arr->dp[i + 1], (arr->icnt - i) * sizeof(arr->dp[0]));
+	--arr->icnt;
+
+	return 1;
+}
+
+inline bool s_remove_dbpl_entry_c(dbl_ptr_t *arr, const char *str, const char c) {
+	if (!arr) return 1;
+
+	bool exists = false;
+	size_t i = find_dblp_entry_c(*arr, str, &exists, c);
+	if (exists == false) return 1;
+
+	memmove(&arr->dp[i], &arr->dp[i + 1], (arr->icnt - i) * sizeof(arr->dp[0]));
+	--arr->icnt;
+
+	return 1;
+}
+
+// get a pointer from a double pointer
+char *dblp_get_ptr(const dbl_ptr_t arr, const char *label) {
+	bool exists = false;
+	size_t i = find_dblp_entry(arr, label, &exists);
+
+	if (exists) return arr.dp[i];
+	else return NULL;
+}
+
+// get a pointer from a double pointer, with char stuff
+char *dblp_get_ptr_c(const dbl_ptr_t arr, const char *label, const char c) {
+	bool exists = false;
+	size_t i = find_dblp_entry_c(arr, label, &exists, c);
+
+	if (exists) return arr.dp[i];
+	else return NULL;
 }

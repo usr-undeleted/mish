@@ -47,6 +47,14 @@ typedef struct {
     arg_t      *ptr;
 } arg_arr_t;
 
+// replaces the arg_t list with a generic double pointer
+typedef struct {
+	char   **dp;
+	size_t  asz;
+	size_t icnt;
+
+} dbl_ptr_t;
+
 // make a new arg, going to the nearest whitespace
 arg_t goto_whitespace(const arg_t arg);
 
@@ -124,5 +132,57 @@ bool append_arg(arg_t *dest, const arg_t src);
 //
 // sz relates to the allocation size used
 bool append_arg_to_arr(arg_arr_t *arr, const arg_t item, const size_t sz);
+
+// remove an entry from an arr by simply setting it
+// as usable (asz = 0)
+//
+// 0 on match, 1 on no match
+bool free_arr_entry(arg_arr_t *arr, const arg_t arg);
+
+// "shift" variant of free(), using memmove()
+// to completely overwrite the old entry away.
+bool s_free_arr_entry(arg_arr_t *arr, const arg_t arg);
+
+// same idea as s_free_arr_entry, but doesn't free and works
+// on a double pointer array type
+bool s_remove_dbpl_entry(dbl_ptr_t *arr, const char *str);
+
+// same as s_remove_dbpl_entry, but stops string comparison at a char
+bool s_remove_dbpl_entry_c(dbl_ptr_t *arr, const char *str, const char c);
+
+// generic freeing of a double pointer list
+void free_dblp(dbl_ptr_t *arr);
+
+// shorten the length of an arg
+//
+// if sz is too big for one of the length, set
+// it to zero
+arg_t shorten_arg(arg_t arg, const size_t sz);
+
+// use strdup to add an entry to a dbl_ptr_t
+bool append_to_dblp(dbl_ptr_t *arr, const void *p, const size_t sz);
+
+// get the length of a string up to a char
+size_t str_len_c(const char *str, const char c);
+
+// compare two strings only up until a char
+//
+// return 0 on exact match
+bool str_cmp_c(const char *one, const char *two, const char c);
+
+// find an entry inside of a dblp
+//
+// sets status to true if it succeded, else, false
+size_t find_dblp_entry(const dbl_ptr_t dblp, const char *label, bool *status);
+
+// same logic as find_dblp_entry, but limits itself
+// to a specific char
+size_t find_dblp_entry_c(const dbl_ptr_t dblp, const char *label, bool *status, const char c);
+
+// get a pointer from a double pointer
+char *dblp_get_ptr(const dbl_ptr_t arr, const char *label);
+
+// get a pointer from a double pointer, with char stuff
+char *dblp_get_ptr_c(const dbl_ptr_t arr, const char *label, const char c);
 
 #endif
