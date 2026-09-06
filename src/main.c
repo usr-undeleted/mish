@@ -358,6 +358,7 @@ int main(int argc, char *argv[], char *envp[]) {
 	}
 
 	free_arg_arr(&child_argv);
+	free_dblp(&child_envp);
 	free_arg(&input);
 	free_path();
 
