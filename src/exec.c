@@ -6,11 +6,12 @@
 #include <errno.h>
 #include <stdio.h>
 
+#include "arg.h"
 #include "keyword.h"
 #include "path.h"
 #include "exec.h"
 
-char *global_argv0;
+char *global_argv0 = NULL;
 
 int execute(int argc, char **argv, char **envp, char flags) {
 	if (flags & INVALID_FLAG) {

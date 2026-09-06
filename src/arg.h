@@ -185,4 +185,7 @@ char *dblp_get_ptr(const dbl_ptr_t arr, const char *label);
 // get a pointer from a double pointer, with char stuff
 char *dblp_get_ptr_c(const dbl_ptr_t arr, const char *label, const char c);
 
+// sees if an arg is a definition, as in
+bool arg_is_def(const arg_t arg);
+
 #endif

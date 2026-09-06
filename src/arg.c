@@ -470,3 +470,30 @@ char *dblp_get_ptr_c(const dbl_ptr_t arr, const char *label, const char c) {
 	if (exists) return arr.dp[i];
 	else return NULL;
 }
+
+// sees if an arg is a definition, as in
+inline bool arg_is_def(const arg_t arg) {
+	size_t i = 0;
+	char quote_type = NO_QUOTES;
+
+	while (i < arg.len) {
+		char q = QUOTE_T(arg.ptr[i]);
+
+		if (q != NO_QUOTES) {
+			if (quote_type != NO_QUOTES) {
+				if (quote_type == q) quote_type = NO_QUOTES;
+
+			} else {
+				quote_type = q;
+			}
+
+		} else if (arg.ptr[i] == '\\' && quote_type == NO_QUOTES) {
+			if (!arg.ptr[++i]) break;
+
+		} else if (arg.ptr[i] == '=' && i && quote_type == NO_QUOTES) return true;
+
+		++i;
+	}
+
+	return false;
+}

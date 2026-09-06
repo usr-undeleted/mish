@@ -195,7 +195,8 @@ int export_keyword(int argc, char *argv[]) {
 
 		char *eq = arg_chr(arg, '=');
 		if (eq == arg.ptr) {
-			fprintf(stderr, "%s: malformed request.\n", EXPORT_KEYWORD_S);
+			fprintf(stderr, "%s: malformed request for \"%s\".\n",
+				EXPORT_KEYWORD_S, argv[i]);
 			err = true;
 			continue;
 		}
@@ -287,12 +288,20 @@ int alias_keyword(int argc, char *argv[]) {
 	}
 
 	for (int i = 1; i < argc; i++) {
+		if (argv[i][0]== '=') {
+			fprintf(stderr, "%s: malformed request for \"%s\".\n",
+				ALIAS_KEYWORD_S, argv[i]);
+			err = true;
+			continue;
+		}
+
 		arg_t arg = make_arg(argv[i]);
 
 		// make sure there's an equal sign
 		char *eq = arg_chr(arg, '=');
 		if (!eq) {
-			fprintf(stderr, "%s: malformed request.\n", ALIAS_KEYWORD_S);
+			fprintf(stderr, "%s: malformed request for \"%s\".\n",
+				ALIAS_KEYWORD_S, argv[i]);
 			err = true;
 			continue;
 		}

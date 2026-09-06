@@ -266,6 +266,7 @@ int remake_arg(arg_t *dest, const arg_t src) {
 	size_t src_i = 0;
 
 	bool aliased = false;
+	bool not_def = false;
 
 	while (src_i < src.len) {
 		// realloc if needed
@@ -274,6 +275,36 @@ int remake_arg(arg_t *dest, const arg_t src) {
 		}
 
 		arg_t arg = cap_to_white(shift_arg(src, src_i));
+
+		// arg is something like DEFINE=SOMETHING
+		if (not_def == false && arg_is_def(arg)) {
+			char *eq = arg_chr(arg, '=');
+			if (!eq) {
+				not_def = true;
+				goto skip;
+			}
+
+			// make the two strings
+			// hopefully one could find a way to not use the heap here
+			size_t llen = eq - arg.ptr;
+			char *label = calloc(1, llen + 1);
+			size_t vlen = arg.len - ((eq + 1) - arg.ptr);
+			char   *val = calloc(1, vlen + 1);
+			if (!val || !label) return 1;
+			// copy over
+			memcpy(label, arg.ptr, llen);
+			memcpy(val, eq + 1, vlen);
+
+			if (shell_set_env(label, val) != 0) return 1;
+
+			free(val);
+			free(label);
+			skip: {
+				idx_to_white(&src_i, src);
+				continue;
+			}
+
+		} else not_def = true;
 
 		// aliases
 		if (aliased == false && !EMPTY_C(src.ptr[src_i])) {
