@@ -50,6 +50,92 @@ char *find_closer(arg_t arg, const char open, const char close) {
 	return NULL;
 }
 
+// expands a src (at src_i) into an env var, or cmd expansion, etc
+//
+// if it fails to expand, return 1
+//
+// src is expected to be at dollar sign
+bool expand(arg_t *dest, arg_t src, size_t *src_i) {
+	if (src.ptr[*src_i] != '$') return 1;
+
+	// skip dollar sign
+	++(*src_i);
+
+	// starts after dollar sign
+	arg_t arg = {
+		.ptr = src.ptr + *src_i,
+		.len = src.len - *src_i,
+		.asz = src.asz - *src_i,
+	};
+	char op = '\0';
+	char cl = '\0';
+
+	// find the proper stuff
+	switch (src.ptr[*src_i]) {
+		case '(': {
+			op = '(';
+			cl = ')';
+			break;
+		}
+
+		// command expansion goes here, for example
+
+		default: {
+			--(*src_i);
+			return 1;
+		}
+	}
+
+	// find the closing thingie
+	char *close = find_closer(arg, op, cl);
+	if (!close) return 1;
+
+	// encapsulates the whole $(THING)
+	arg.len = close - arg.ptr + 1;
+
+	// used to find env var
+	char *start = arg.ptr + 1;
+	*close = '\0';
+
+	// make sure to skip everything from the source
+	*src_i += strlen(start) + 2;
+	char *content = NULL;
+	switch (op) {
+		case '(': {
+			// env vars
+			content = shell_get_env(start);
+			break;
+		}
+
+		// command expansion goes here, for example
+
+		default: {
+			content = NULL;
+			break;
+		}
+	}
+
+	// wasnt found
+	if (!content) {
+		return 0;
+	};
+
+	// append to dest
+	// increase size if needed
+	size_t cont_len = strlen(content);
+	if ((dest->len + cont_len) >= dest->asz) {
+		if (alloc_arg(dest, MAX(cont_len, ARGV_ASZ)) != 0) return 1;
+	}
+
+	dest->len += snprintf(dest->ptr + dest->len,
+		dest->asz - dest->len,
+		"%s", content);
+
+	*close = cl;
+
+	return 0;
+}
+
 // form an arg, allocating memory automatically
 int parse_arg(arg_t *dest, arg_t src) {
 	if (!dest) return 1;
@@ -69,59 +155,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 			// stuff like env vars
 			case '$': {
 				if (quote_type == QUOTE_SIN) goto copy_memory;
-
-				// skip dollar sign
-				src_i++;
-				switch (src.ptr[src_i]) {
-					// env var expansion
-					case '(': {
-						arg_t arg = {
-							.ptr = src.ptr + src_i,
-							.len = src.len - src_i,
-							.asz = src.asz - src_i,
-						};
-
-						char *close = find_closer(arg, '(', ')');
-
-						if (!close) {
-							// since we failed, move back and copy
-							--src_i;
-							goto copy_memory;
-						}
-
-						// encapsulates the whole $(ENV)
-						arg.len = close - arg.ptr + 1;
-
-						char *start = arg.ptr + 1;
-						*close = '\0';
-
-						// make sure to skip everything from the source
-						src_i += strlen(start) + 2;
-						char *env = shell_get_env(start);
-						if (!env) {
-							break;
-						};
-
-						// append to dest
-						// increase size if needed
-						size_t env_len = strlen(env);
-						if ((dest->len + env_len) >= dest->asz) {
-							if (alloc_arg(dest, MAX(env_len, ARGV_ASZ)) != 0) return 1;
-						}
-
-						dest->len += snprintf(dest->ptr + dest->len,
-							dest->asz - dest->len,
-							"%s", env);
-						*close = ')';
-
-						break;
-					}
-
-					default: {
-						--src_i;
-						goto copy_memory;
-					}
-				}
+				if (expand(dest, src, &src_i) != 0) goto copy_memory;
 
 				continue;
 			}
