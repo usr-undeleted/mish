@@ -188,4 +188,9 @@ char *dblp_get_ptr_c(const dbl_ptr_t arr, const char *label, const char c);
 // sees if an arg is a definition, as in
 bool arg_is_def(const arg_t arg);
 
+// make the struct from a double pointer
+//
+// sets asz to len * sizeof(dp[0])
+dbl_ptr_t make_dblp(char **dp);
+
 #endif

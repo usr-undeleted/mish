@@ -363,11 +363,11 @@ bool str_cmp_c(const char *one, const char *two, const char c) {
 //
 // sets status to true if it succeded, else, false
 size_t find_dblp_entry(const dbl_ptr_t dblp, const char *label, bool *status) {
-	*status = false;
+	if (status) *status = false;
 
 	for (size_t i = 0; i < dblp.icnt; i++) {
 		if (!strcmp(dblp.dp[i], label)) {
-			*status = true;
+			if (status) *status = true;
 			return i;
 		}
 	}
@@ -378,11 +378,11 @@ size_t find_dblp_entry(const dbl_ptr_t dblp, const char *label, bool *status) {
 // same logic as find_dblp_entry, but limits itself
 // to a specific char
 size_t find_dblp_entry_c(const dbl_ptr_t dblp, const char *label, bool *status, const char c) {
-	*status = false;
+	if (status) *status = false;
 
 	for (size_t i = 0; i < dblp.icnt; i++) {
 		if (!str_cmp_c(dblp.dp[i], label, c)) {
-			*status = true;
+			if (status) *status = true;
 			return i;
 		}
 	}
@@ -496,4 +496,20 @@ inline bool arg_is_def(const arg_t arg) {
 	}
 
 	return false;
+}
+
+// make the struct from a double pointer
+//
+// sets asz to len * sizeof(dp[0])
+dbl_ptr_t make_dblp(char **dp) {
+	dbl_ptr_t ret = {0};
+	ret.dp = dp;
+
+	size_t i = 0;
+	while (ret.dp[i++]);
+
+	ret.icnt = i;
+	ret.asz = ret.icnt * sizeof(ret.dp[0]);
+
+	return ret;
 }

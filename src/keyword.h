@@ -12,7 +12,7 @@ int which_keyword(int argc, char *argv[]);
 
 int echo_keyword(int argc, char *argv[]);
 
-int cd_keyword(int argc, char *argv[]);
+int cd_keyword(int argc, char *argv[], char *envp[]);
 
 int pwd_keyword(void);
 

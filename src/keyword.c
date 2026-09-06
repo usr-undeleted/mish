@@ -17,6 +17,20 @@
 #define KEY_PARTIAL_ERR 1
 #define KEY_FULL_ERR    2
 
+// get a value from a label inside an envp double pointer
+char *envp_get(char *envp[], const char *label) {
+	bool exists = false;
+	size_t i = find_dblp_entry_c(make_dblp(envp), label, &exists, '=');
+	if (exists == false) return NULL;
+
+	char *eq = strchr(envp[i], '=');
+	if (!eq) return NULL;
+
+	char *ret = eq + 1;
+
+	return ret;
+}
+
 // relates a string to a keyword
 int find_keyword(char *str) {
     if (!strcmp(str, EXIT_KEYWORD_S)) {
@@ -120,37 +134,46 @@ int echo_keyword(int argc, char *argv[]) {
 	return KEY_SUCCESS;
 }
 
-int cd_keyword(int argc, char *argv[]) {
+int cd_keyword(int argc, char *argv[], char *envp[]) {
+	if (argc > 2) {
+		fprintf(stderr, "%s: excess arguments shall be ignored.\n", CD_KEYWORD_S);
+		fflush(stderr);
+	}
+
 	bool err = false;
 
+	// oldpwd
+	char buf[PATH_MAX + 1] = {0};
+	getcwd(buf, sizeof(buf) - 1);
+	export_env("OLDPWD", buf);
+
 	if (argc < 2) {
-		// no args leads directly to home
-		char *home = getenv("HOME");
-		if (!home) {
-			fprintf(stderr, "%s: failed to get home directory path.\n",
-				CD_KEYWORD_S);
+		// home dir, always
+		if (chdir(envp_get(envp, "HOME")) != 0) {
+			fprintf(stderr, "%s: couldn't change to home directory: %s\n",
+				CD_KEYWORD_S, strerror(errno));
+			err = true;
 		}
 
-		if (chdir(home) != 0) {
-			fprintf(stderr, "%s: couldn't change to \"%s\": %s\n",
+	} else {
+		// user-picked dir
+		if (chdir(argv[1]) != 0) {
+			fprintf(stderr, "%s: couldn't move to \"%s\": %s\n",
 				CD_KEYWORD_S, argv[1], strerror(errno));
+			err = true;
 		}
+	}
 
+	memset(buf, '\0', sizeof(buf));
+	getcwd(buf, sizeof(buf) - 1);
+	export_env("PWD", buf);
+
+	if (err) {
 		fflush(stderr);
 		return KEY_FULL_ERR;
-
-	} else if (argc > 2) {
-		fprintf(stderr, "%s: excess arguments shall be ignored.\n", CD_KEYWORD_S);
 	}
 
-	if (chdir(argv[1]) != 0) {
-		fprintf(stderr, "%s: couldn't change to \"%s\": %s\n",
-			CD_KEYWORD_S, argv[1], strerror(errno));
-		fflush(stderr);
-		err = true;
-	}
-
-	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
+	return KEY_SUCCESS;
 }
 
 int pwd_keyword(void) {

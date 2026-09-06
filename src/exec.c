@@ -43,7 +43,7 @@ int execute(int argc, char **argv, char **envp, char flags) {
 			}
 
 			case CD_KEYWORD_N: {
-				status = cd_keyword(argc, argv);
+				status = cd_keyword(argc, argv, envp);
 				break;
 			}
 
