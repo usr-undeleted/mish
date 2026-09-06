@@ -7,7 +7,7 @@
 #define NO_STATUS 1 << 1
 
 // just to check for invalid flags
-#define INVALID_FLAG ~(NO_FORK & NO_STATUS)
+#define INVALID_FLAG ~(NO_FORK | NO_STATUS)
 // stuff that the user isn't at fault for
 #define INTERNAL_ERR 127
 

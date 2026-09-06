@@ -101,37 +101,44 @@ int execute(int argc, char **argv, char **envp, char flags) {
 			fprintf(stderr, "%s: couldn't execute \"%s\": Unknown binary\n",
 				basename(global_argv0), argv[0]);
 			fflush(stderr);
-			return INTERNAL_ERR;
+			return flags & NO_STATUS ? 0 : INTERNAL_ERR;
 
 		} else {
 			bin_path = argv[0];
 		}
 	}
 
-	pid_t child = fork();
+	if (!(flags & NO_FORK)) {
+		pid_t child = fork();
+		switch (child) {
+			case -1: {
+				return 1;
+				break;
+			}
 
-	switch (child) {
-		case -1: {
-			return 1;
-			break;
+			case 0: {
+				goto exec;
+				break;
+			}
+
+			default: {
+				while (waitpid(child, &status, WNOHANG) != -1) {};
+				break;
+			}
 		}
-
-		case 0: {
-			execve(bin_path, argv, envp);
-
-			fprintf(stderr, "%s: couldn't execute \"%s\": %s\n",
-				basename(global_argv0), bin_path, strerror(errno));
-   			fflush(stderr);
-			return INTERNAL_ERR;
-
-			break;
-		}
-
-		default: {
-			while (waitpid(child, &status, WNOHANG) != -1) {};
-			break;
-		}
+	} else {
+		goto exec;
 	}
 
+	if (flags & NO_STATUS) status = 0;
 	return status;
+
+	// what a fork would do
+	exec:
+	execve(bin_path, argv, envp);
+
+	fprintf(stderr, "%s: couldn't execute \"%s\": %s\n",
+		basename(global_argv0), bin_path, strerror(errno));
+   				fflush(stderr);
+	return flags & NO_STATUS ? 0 : INTERNAL_ERR;
 }
