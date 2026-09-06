@@ -239,6 +239,7 @@ int read_fd_line(arg_t *dest, int fd) {
 	// a prompt for missing quotes or unfinished backslashes
 
 	ssize_t r = 0;
+	bool nl = false;
 	while (1) {
 		r = read(fd, &ch, 1);
 		if (r == -1)  return 1;
@@ -248,10 +249,12 @@ int read_fd_line(arg_t *dest, int fd) {
 			if (alloc_arg(dest, ARGV_ASZ) != 0) return 1;
 		}
 
-		dest->ptr[i++] = ch;
+		if (ch == '\n') nl = true;
+
+		dest->ptr[i++] = nl == true ? '\0' : ch;
 		dest->len++;
 
-		if (ch == '\n') break;
+		if (nl == true) break;
 	}
 
 	return 0;
@@ -285,20 +288,18 @@ int remake_arg(arg_t *dest, const arg_t src) {
 			}
 
 			// make the two strings
-			// hopefully one could find a way to not use the heap here
-			size_t llen = eq - arg.ptr;
-			char *label = calloc(1, llen + 1);
-			size_t vlen = arg.len - ((eq + 1) - arg.ptr);
-			char   *val = calloc(1, vlen + 1);
-			if (!val || !label) return 1;
-			// copy over
-			memcpy(label, arg.ptr, llen);
-			memcpy(val, eq + 1, vlen);
+			char *b = calloc(1, arg.len + 1);
+			if (!b) return 1;
+			memcpy(b, arg.ptr, arg.len);
 
-			if (shell_set_env(label, val) != 0) return 1;
+			// make the two strings
+			b[eq - arg.ptr] = '\0';
+			char *label = b;
+			char   *val = &b[eq - arg.ptr + 1];
 
-			free(val);
-			free(label);
+			shell_set_env(label, val);
+
+			free(b);
 			skip: {
 				idx_to_white(&src_i, src);
 				continue;
