@@ -17,6 +17,70 @@
 #define KEY_PARTIAL_ERR 1
 #define KEY_FULL_ERR    2
 
+// a flag array will be made of this
+typedef struct {
+	// the flag
+	char   ch;
+	// the string
+	char *str;
+	// the pointer the bool
+	bool *val;
+
+} flag_t;
+
+// return a value greater or equal to zero on success, else, a negative
+// number is returned
+//
+// aka uhm, returns an idx into flags
+ssize_t ch_is_flag(const char ch, const flag_t *flags, const size_t fc) {
+	for (size_t i = 0; i < fc; i++) {
+		if (ch == flags[i].ch) return i;
+	}
+
+	return -1;
+}
+
+// see the flags for an arg
+//
+// deals with both single char
+//
+// fc == flag count
+//
+// return 0 on success (or not a flag arg), 1 on unknown flag
+bool flag(const char *str, const flag_t *flags, const size_t fc) {
+	if (!str || !flags) return 1;
+	bool match = false;
+
+	if (str[0] == '-' && str[1] == '-') {
+		// loop trough full flags
+		for (size_t i = 0; i < fc; i++) {
+			// find a match
+			if (!strcmp(str + 2, flags[i].str)) {
+				match = true;
+				if (flags[i].val) *flags[i].val = true;
+				break;
+			}
+		}
+
+	} else if (str[0] == '-') {
+		// single flags
+		size_t i = 1;
+		size_t x;
+
+		while (str[i]) {
+			if ((x = ch_is_flag(str[i], flags, fc)) >= 0) {
+				match = true;
+				*flags[x].val = true;
+
+			} else return 1;
+			++i;
+		}
+
+	} else return 0;
+
+	return match == true ? 0 : 1;
+}
+
 // get a value from a label inside an envp double pointer
 char *envp_get(char *envp[], const char *label) {
 	bool exists = false;
@@ -76,6 +140,9 @@ int exit_keyword(void) {
     return KEY_SUCCESS;
 }
 
+#define WHICH_KEY_PATH_ONLY "path-only"
+#define      WHICH_KEY_HELP "help"
+
 int which_keyword(int argc, char *argv[]) {
 	if (argc < 2) {
 		fprintf(stderr, "%s: not 'nuff arguments.\n", WHICH_KEYWORD_S);
@@ -83,8 +150,58 @@ int which_keyword(int argc, char *argv[]) {
 		return KEY_FULL_ERR;
 	}
 
-	bool err = false;
+	bool only_path = false;
+	bool      help = false;
+
+	flag_t flags[] = {
+		// path flag
+		{
+			.ch  = 'p',
+			.str = WHICH_KEY_PATH_ONLY,
+			.val = &only_path,
+		},
+
+		// help flag
+		{
+			.ch  = 'h',
+			.str = WHICH_KEY_HELP,
+			.val = &help,
+		}
+	};
+
+	size_t fc = sizeof(flags) / sizeof(flags[0]);
+
 	for (int i = 1; i < argc; i++) {
+		if (flag(argv[i], flags, fc) != 0) {
+			fprintf(stderr, "%s: unknown flag on \"%s\".\n", WHICH_KEYWORD_S, argv[i]);
+			fflush(stderr);
+			return KEY_FULL_ERR;
+		}
+	}
+
+	if (help == true) {
+		printf(
+			"which built-in instructions:\n"
+			"usage:\n"
+			"\twhich -<flags> --<flags>\n"
+			"\twhich will printf if the specified binary exists on the system, "
+			"indicating if it's a binary, built-in, or alias.\n"
+			"\n"
+
+			"flags:\n"
+			"\t-h or --help: show this menu.\n"
+			"\t-p or --"WHICH_KEY_PATH_ONLY": only print the path of a binary.\n"
+		);
+		fflush(stdout);
+		return KEY_SUCCESS;
+	}
+
+	bool       err = false;
+	bool did_stuff = false;
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') continue;
+
+		did_stuff = true;
 		arg_t arg = make_arg(argv[i]);
 
 		// aliases
@@ -112,8 +229,18 @@ int which_keyword(int argc, char *argv[]) {
 			err = true;
 
 		} else {
-			printf("\"%s\" -> \"%s\"\n", argv[i], resolved);
+			if (only_path) {
+				printf("%s\n", resolved);
+
+			} else {
+				printf("\"%s\" -> \"%s\"\n", argv[i], resolved);
+			}
 		}
+	}
+
+	if (did_stuff == false) {
+		fprintf(stderr, "%s: nothing was done!\n", WHICH_KEYWORD_S);
+		err = true;
 	}
 
 	fflush(stdout);
