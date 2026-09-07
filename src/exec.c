@@ -82,6 +82,11 @@ int execute(int argc, char **argv, char **envp, char flags) {
 				break;
 			}
 
+			case RETURN_KEYWORD_N: {
+				status = return_keyword(argc, argv);
+				break;
+			}
+
 			default: {
 				status = INTERNAL_ERR;
 				fprintf(stderr, "%s: unhandled keyword %d (internal).\n",

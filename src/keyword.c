@@ -130,6 +130,9 @@ int find_keyword(char *str) {
     } else if (!strcmp(str, UNALIAS_KEYWORD_S)) {
     	return UNALIAS_KEYWORD_N;
 
+    } else if (!strcmp(str, RETURN_KEYWORD_S)) {
+    	return RETURN_KEYWORD_N;
+
     } else {
         return NOT_A_KEYWORD;
     }
@@ -489,4 +492,8 @@ int unalias_keyword(int argc, char **argv) {
 
 	if (err == true) fflush(stderr);
 	return err ? KEY_PARTIAL_ERR : KEY_SUCCESS;
+}
+
+int return_keyword(int argc, char **argv) {
+	return argc < 2 ? 0 : strtol(argv[1], NULL, 0);
 }

@@ -28,6 +28,8 @@ int alias_keyword(int argc, char *argv[]);
 
 int unalias_keyword(int argc, char *argv[]);
 
+int return_keyword(int argc, char *argv[]);
+
 #define NOT_A_KEYWORD 0
 
 #define EXIT_KEYWORD_S "exit"
@@ -62,5 +64,8 @@ int unalias_keyword(int argc, char *argv[]);
 
 #define UNALIAS_KEYWORD_S "unalias"
 #define UNALIAS_KEYWORD_N 11
+
+#define RETURN_KEYWORD_S "return"
+#define RETURN_KEYWORD_N 12
 
 #endif
