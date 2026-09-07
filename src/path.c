@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "path.h"
+#include "envp.h"
 #include "arg.h"
 
 // how many items to allocate per (re)allocation
@@ -74,7 +75,7 @@ void append_from_path(const char *path) {
 
 // read $PATH and figure out the paths for executable files
 void populate_list(void) {
-    char *env = getenv("PATH");
+    char *env = shell_get_env("PATH");
     if (!env) return;
 
     // loop trough everything between colons

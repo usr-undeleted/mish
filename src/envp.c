@@ -68,7 +68,7 @@ bool shell_set_env(const char *label, const char *val) {
 	if (val) strncat(s, val, sz - llen - 1);
 
 	bool exists = false;
-	size_t i = find_dblp_entry(shell_envp, label, &exists);
+	size_t i = find_dblp_entry_c(shell_envp, label, &exists, '=');
 	if (exists == true) {
 		// replace
 		free(shell_envp.dp[i]);
@@ -118,14 +118,23 @@ bool export_env(const char *label, const char *val) {
 	if (exists == true && val && unset_env(label) != 0) return 1;
 
 	// make the env
-	if (shell_set_env(label, val) != 0) return 1;
+	if (shell_set_env(label, val == NULL ? shell_get_env(label) : val) != 0) return 1;
 
 	i = find_dblp_entry_c(shell_envp, label, &exists, '=');
 	if (exists == false) return 1;
 
-	// copy it over
-	if (append_to_dblp(&child_envp, shell_envp.dp[i], ALLOC_SZ) != 0) return 1;
-	if (append_to_dblp(&child_envp, NULL, ALLOC_SZ) != 0) return 1;
+	bool c_exists = false;
+	size_t ci = find_dblp_entry_c(child_envp, label, &c_exists, '=');
+
+	if (c_exists == true) {
+		// already exists, replace
+		child_envp.dp[ci] = shell_envp.dp[i];
+
+	} else {
+		// append
+		if (append_to_dblp(&child_envp, shell_envp.dp[i], ALLOC_SZ) != 0) return 1;
+		if (append_to_dblp(&child_envp, NULL, ALLOC_SZ) != 0) return 1;
+	}
 
 	return 0;
 }

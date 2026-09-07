@@ -298,6 +298,7 @@ int remake_arg(arg_t *dest, const arg_t src) {
 			char   *val = &b[eq - arg.ptr + 1];
 
 			shell_set_env(label, val);
+			if (!strcmp(label, "PATH")) refresh_path();
 
 			free(b);
 			skip: {
@@ -334,10 +335,10 @@ int remake_arg(arg_t *dest, const arg_t src) {
 int main(int argc, char *argv[], char *envp[]) {
 	(void)argc;(void)argv;(void)envp;
 
-	// make $PATH
-	refresh_path();
 	// make the envp passed down to children
 	if (make_child_envp((const char **)envp)) return 1;
+	// make $PATH
+	refresh_path();
 
 	// stuff
 	global_argv0 = argv[0];

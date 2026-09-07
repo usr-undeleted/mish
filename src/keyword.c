@@ -226,14 +226,14 @@ int export_keyword(int argc, char *argv[]) {
 
 		if (eq) *eq = '\0';
 
-		if (!strncmp(argv[i], "PATH=", 5)) refresh_path();
-
-		if (export_env(argv[i], eq ? eq + 1 : "") != 0) {
+		if (export_env(argv[i], eq ? eq + 1 : NULL) != 0) {
 			fprintf(stderr, "%s: failed to export environment variable \"%s\".\n",
 				EXPORT_KEYWORD_S, argv[i]);
 			err = true;
 			continue;
 		}
+
+		if (!strncmp(argv[i], "PATH=", 5) || !strcmp(argv[i], "PATH")) refresh_path();
 
 		if (eq) *eq = '=';
 	}
