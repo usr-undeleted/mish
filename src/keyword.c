@@ -140,8 +140,10 @@ int exit_keyword(void) {
     return KEY_SUCCESS;
 }
 
-#define WHICH_KEY_PATH_ONLY "path-only"
-#define      WHICH_KEY_HELP "help"
+#define WHICH_KEY_PATH_ONLY_S "path-only"
+#define WHICH_KEY_PATH_ONLY_C 'c'
+#define      WHICH_KEY_HELP_S "help"
+#define      WHICH_KEY_HELP_C 'h'
 
 int which_keyword(int argc, char *argv[]) {
 	if (argc < 2) {
@@ -156,15 +158,15 @@ int which_keyword(int argc, char *argv[]) {
 	flag_t flags[] = {
 		// path flag
 		{
-			.ch  = 'p',
-			.str = WHICH_KEY_PATH_ONLY,
+			.ch  = WHICH_KEY_PATH_ONLY_C,
+			.str = WHICH_KEY_PATH_ONLY_S,
 			.val = &only_path,
 		},
 
 		// help flag
 		{
-			.ch  = 'h',
-			.str = WHICH_KEY_HELP,
+			.ch  = WHICH_KEY_HELP_C,
+			.str = WHICH_KEY_HELP_S,
 			.val = &help,
 		}
 	};
@@ -189,8 +191,10 @@ int which_keyword(int argc, char *argv[]) {
 			"\n"
 
 			"flags:\n"
-			"\t-h or --help: show this menu.\n"
-			"\t-p or --"WHICH_KEY_PATH_ONLY": only print the path of a binary.\n"
+			"\t-%c or --"WHICH_KEY_HELP_S": show this menu.\n"
+			"\t-%c or --"WHICH_KEY_PATH_ONLY_S": only print the path of a binary.\n",
+			WHICH_KEY_HELP_C,
+			WHICH_KEY_PATH_ONLY_C
 		);
 		fflush(stdout);
 		return KEY_SUCCESS;
