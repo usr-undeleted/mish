@@ -221,6 +221,17 @@ inline char *arg_chr(const arg_t arg, const char ch) {
 	return NULL;
 }
 
+// reverse search (arg_chr)
+inline char *arg_r_chr(const arg_t arg, const char ch) {
+	if (!arg.len) return NULL;
+
+	for (size_t i = arg.len - 1; i >= 0; i--) {
+		if (arg.ptr[i] == ch) return arg.ptr + i;
+	}
+
+	return NULL;
+}
+
 // return a copy of the arg with a specific
 // offset, shifting to the right only
 // note that this shifts the pointer to
@@ -512,4 +523,31 @@ dbl_ptr_t make_dblp(char **dp) {
 	ret.asz = ret.icnt * sizeof(ret.dp[0]);
 
 	return ret;
+}
+
+// find the equivalent closer for the opener
+//
+// returns null on failure to find the closer, or when the
+// pointer provided isn't the open char
+char *find_closer(arg_t arg, const char open, const char close) {
+	if (*arg.ptr != open) return NULL;
+
+	size_t depth = 0;
+	size_t i     = 0;
+
+	while (i < arg.len) {
+		if (arg.ptr[i] == open) {
+			depth++;
+		} else if (arg.ptr[i] == close) {
+			depth--;
+		}
+
+		if (!depth) return &arg.ptr[i];
+
+		i++;
+	}
+
+	if (depth) return arg_r_chr(arg, close);
+
+	return NULL;
 }

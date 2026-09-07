@@ -106,6 +106,9 @@ bool arg_cpy(arg_t *dest, arg_t src);
 // an arg (limits itself to the length)
 char *arg_chr(const arg_t arg, const char ch);
 
+// reverse search (arg_chr)
+char *arg_r_chr(const arg_t arg, const char ch);
+
 // return a copy of the arg with a specific
 // offset, shifting to the right only
 // note that this shifts the pointer to
@@ -192,5 +195,11 @@ bool arg_is_def(const arg_t arg);
 //
 // sets asz to len * sizeof(dp[0])
 dbl_ptr_t make_dblp(char **dp);
+
+// find the equivalent closer for the opener
+//
+// returns null on failure to find the closer, or when the
+// pointer provided isn't the open char
+char *find_closer(arg_t arg, const char open, const char close);
 
 #endif
