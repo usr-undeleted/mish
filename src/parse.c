@@ -88,7 +88,7 @@ int remake_arg(arg_t *dest, const arg_t src) {
 // if it fails to expand, return 1
 //
 // src is expected to be at dollar sign
-bool expand(arg_t *dest, arg_t src, size_t *src_i) {
+bool expand(arg_t *dest, const arg_t src, size_t *src_i, char *quote_type) {
 	if (src.ptr[*src_i] != '$') return 1;
 
 	// skip dollar sign
@@ -139,10 +139,24 @@ bool expand(arg_t *dest, arg_t src, size_t *src_i) {
 	// make sure to skip everything from the source
 	*src_i += strlen(start) + 2;
 	char *content = NULL;
+
+	// make the string for comparisons
+	char *comp = calloc(sizeof(char), src.len - 2);
+	if (!comp) return 1;
+	size_t c_src_i = 0, c_dest_i = 0;
+
+	while (1) {
+		if (determine_quote(start[c_src_i], quote_type)) ++c_src_i;
+
+		if (!start[c_src_i]) break;
+		comp[c_dest_i++] = start[c_src_i++];
+	}
+
+
 	switch (op) {
 		case '(': {
 			// env vars
-			content = shell_get_env(start);
+			content = shell_get_env(comp);
 			break;
 		}
 
@@ -152,11 +166,9 @@ bool expand(arg_t *dest, arg_t src, size_t *src_i) {
 			break;
 		}
 		*/
-
-		default: {
-			break;
-		}
 	}
+
+	free(comp);
 
 	// wasnt found
 	if (!content) {
@@ -199,7 +211,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 			// stuff like env vars
 			case '$': {
 				if (quote_type == QUOTE_SIN) goto copy_memory;
-				if (expand(dest, src, &src_i) != 0) goto copy_memory;
+				if (expand(dest, src, &src_i, &quote_type) != 0) goto copy_memory;
 
 				continue;
 			}

@@ -6,6 +6,26 @@
 
 #include "arg.h"
 
+// decides what to do with quotes on a char
+//
+// returns 1 if the callee should increment their index
+bool determine_quote(const char ch, char *quote_type) {
+	char quote_c = QUOTE_T(ch);
+
+	if (quote_c != NO_QUOTES) {
+		if (*quote_type != NO_QUOTES) {
+			if (*quote_type == quote_c) *quote_type = NO_QUOTES;
+
+		} else {
+			*quote_type = quote_c;
+		}
+
+		return 1;
+	}
+
+	return 0;
+}
+
 // form an index that could be used, for example, to
 // go to whitespace, or encapsulate an arg
 size_t arg_skip_i(const arg_t arg) {
@@ -19,15 +39,8 @@ size_t arg_skip_i(const arg_t arg) {
 			goto end;
 		}
 
-		char q = QUOTE_T(arg.ptr[ret]);
-
-		if (q != NO_QUOTES) {
-			if (quote_type != NO_QUOTES) {
-				if (quote_type == q) quote_type = NO_QUOTES;
-
-			} else {
-				quote_type = q;
-			}
+		if (determine_quote(arg.ptr[ret], &quote_type)) {
+			++ret;
 
 		} else if (arg.ptr[ret] == '\\' && quote_type == NO_QUOTES) {
 			back = true;

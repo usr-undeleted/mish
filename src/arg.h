@@ -202,4 +202,9 @@ dbl_ptr_t make_dblp(char **dp);
 // pointer provided isn't the open char
 char *find_closer(arg_t arg, const char open, const char close);
 
+// decides what to do with quotes on a char
+//
+// returns 1 if the callee should increment their index
+bool determine_quote(const char ch, char *quote_type);
+
 #endif
