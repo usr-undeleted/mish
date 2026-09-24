@@ -9,14 +9,11 @@
 #include <stdio.h>
 #include <libgen.h>
 
-#include "hash.h"
 #include "parse.h"
 #include "envp.h"
 #include "exec.h"
 #include "path.h"
 #include "arg.h"
-
-#define ARGV_ARR_ASZ 8
 
 // TODO: globbin' (globbing, if you don't like having fun...)
 // TODO: user input has to be non-canonical and respond immediately
@@ -84,7 +81,6 @@ int main(int argc, char *argv[], char *envp[]) {
 		}
 
 		status = 0;
-
 		fflush(stdout);
 
 		if (read_fd_line(&input, STDIN_FILENO)) return 1;

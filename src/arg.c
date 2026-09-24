@@ -55,6 +55,11 @@ size_t arg_skip_i(const arg_t arg) {
 					break;
 				}
 
+				case '[': {
+					cl = ']';
+					break;
+				}
+
 				default: {
 					--ret;
 					goto end;
