@@ -115,7 +115,7 @@ void refresh_path(void) {
 
 // get a binary path from a binary name
 char *fetch_from_path(const arg_t bin) {
-
+	// try hash map first
 	bool put_on_hash = false;
 	arg_t hash_attempt = hash_map_fetch(&map, bin);
 	if (!hash_attempt.ptr) put_on_hash = true;
@@ -130,6 +130,7 @@ char *fetch_from_path(const arg_t bin) {
         comp_arg.len  -= comp_arg.ptr - known_paths.ptr[i].ptr;
 
         if (!arg_cmp(comp_arg, bin)) {
+        	// put on hash map since we failed last time
         	if (put_on_hash) hash_map_put(&map, known_paths.ptr[i]);
         	return known_paths.ptr[i].ptr;
         }
