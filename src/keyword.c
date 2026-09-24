@@ -40,6 +40,9 @@ ssize_t ch_is_flag(const char ch, const flag_t *flags, const size_t fc) {
 	return -1;
 }
 
+// hash map for keywords
+hash_map builtin_hash = {0};
+
 // see the flags for an arg
 //
 // deals with both single char
@@ -518,3 +521,60 @@ int hash_keyword(void) {
 
 	return KEY_SUCCESS;
 }
+
+// builtins, for hashmap
+static arg_t actual_list[] = {
+	{
+		.ptr = EXIT_KEYWORD_S,
+		.len = sizeof(EXIT_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = WHICH_KEYWORD_S,
+		.len = sizeof(WHICH_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = ECHO_KEYWORD_S,
+		.len = sizeof(ECHO_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = CD_KEYWORD_S,
+		.len = sizeof(CD_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = PWD_KEYWORD_S,
+		.len = sizeof(PWD_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = ENV_KEYWORD_S,
+		.len = sizeof(ENV_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = EXPORT_KEYWORD_S,
+		.len = sizeof(EXPORT_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = UNSET_KEYWORD_S,
+		.len = sizeof(UNSET_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = PATH_KEYWORD_S,
+		.len = sizeof(PATH_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = ALIAS_KEYWORD_S,
+		.len = sizeof(ALIAS_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = RETURN_KEYWORD_S,
+		.len = sizeof(RETURN_KEYWORD_S) - 1,
+	},
+	{
+		.ptr = HASH_KEYWORD_S,
+		.len = sizeof(HASH_KEYWORD_S) - 1,
+	},
+};
+
+arg_arr_t builtin_list = {
+	.ptr  = actual_list,
+	.icnt = (sizeof(actual_list) / sizeof(actual_list[0])),
+};

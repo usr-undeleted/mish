@@ -3,6 +3,13 @@
 
 #include <stdbool.h>
 
+#include "hash.h"
+
+// used by main.c to start the hash map
+extern arg_arr_t builtin_list;
+// hash map for keywords
+extern hash_map builtin_hash;
+
 // relates a string to a keyword
 int find_keyword(char *str);
 

@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <libgen.h>
 
+#include "hash.h"
+#include "keyword.h"
 #include "parse.h"
 #include "envp.h"
 #include "exec.h"
@@ -58,10 +60,13 @@ int read_fd_line(arg_t *dest, int fd) {
 int main(int argc, char *argv[], char *envp[]) {
 	(void)argc;(void)argv;(void)envp;
 
+	// make the builtin hashmap
+	builtin_hash = make_hash_map(builtin_list, INIT_ON_START);
+	if (!builtin_hash.list) return 1;
+
 	// make the envp passed down to children
 	if (make_child_envp((const char **)envp)) return 1;
 	// make $PATH
-	//
 	// hash map is made here too
 	refresh_path();
 
