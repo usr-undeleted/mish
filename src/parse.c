@@ -268,7 +268,7 @@ bool expand(arg_t *dest, const arg_t src, size_t *src_i, char *quote_type) {
 		"%s", content);
 
 	*close = cl;
-	// if (op == '[') free(content);
+	if (op == '[') free(content);
 
 	return 0;
 }

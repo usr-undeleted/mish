@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "alias.h"
 #include "arg.h"
 

@@ -116,7 +116,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			zero_arg_arr(&child_argv);
 			zero_arg(&input);
 			free_arg(&remade);
-			// passed_argv doesn't get freed
+			free(passed_argv);
 
 			// yes, i know this isn't the right thing...
 			if (!isatty(STDIN_FILENO)) break;

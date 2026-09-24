@@ -28,6 +28,7 @@
 
 // see if either the asz or ptr of an arg is 0
 #define ARG_NULL(arg) (!arg.ptr ? 1 : !arg.asz ? 1 : 0)
+#define ARG_NULL_P(arg) (!arg->ptr ? 1 : !arg->asz ? 1 : 0)
 
 // string should include newline
 typedef struct {

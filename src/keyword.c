@@ -329,7 +329,7 @@ int env_keyword(char *envp[]) {
 		// value, ignore the special treatment :P
 		arg_t last = shift_arg(shift_arg_c(env, '='), 1);
 
-		printf("%.*s\e[1m%.*s\e[0m\n",
+		printf("%.*s\x1b[1m%.*s\x1b[0m\n",
 			(int)prev.len, prev.ptr,
 			(int)last.len, last.ptr);
 
@@ -405,7 +405,7 @@ int path_keyword(void) {
 
 	while ((path = reveal_path(&i))) {
 		char *f = basename(path);
-		printf("%.*s/\e[1m%s\e[0m\n", (int)(f - path) - 1, path, f);
+		printf("%.*s/\x1b[1m%s\x1b[0m\n", (int)(f - path) - 1, path, f);
 	}
 
 	if (!i) printf("<no paths have been defined>\n");
@@ -430,7 +430,7 @@ int alias_keyword(int argc, char *argv[]) {
 				// replacement command
 				arg_t last = shift_arg(*p, prev.len);
 
-				printf("%.*s\"\e[1m%.*s\e[0m\"\n",
+				printf("%.*s\"\x1b[1m%.*s\x1b[0m\"\n",
 					(int)prev.len, prev.ptr,
 					(int)last.len, last.ptr);
 			}

@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 
 #include "arg.h"
@@ -190,7 +189,7 @@ inline arg_t make_arg(const char *str) {
 }
 
 inline void free_arg(arg_t *arg) {
-	if (arg->ptr && arg->asz) free(arg->ptr);
+	if (ARG_NULL_P(arg)) free(arg->ptr);
 	memset(arg, '\0', sizeof(arg_t));
 }
 
@@ -301,8 +300,10 @@ size_t arr_usable_idx(const arg_arr_t arr) {
 inline bool append_arg(arg_t *dest, const arg_t src) {
 	if (!dest) return 1;
 
-	if ((dest->len + src.len) > dest->asz) {
-		if (alloc_arg(dest, (dest->len + src.len) - dest->asz)) return 1;
+	if ((dest->len + src.len) > dest->asz || !dest->ptr) {
+		size_t n = ((dest->len + src.len) < dest->asz) ?
+			dest->asz : (dest->len + src.len) - dest->asz;
+		if (alloc_arg(dest, n)) return 1;
 	}
 
 	memcpy(dest->ptr + dest->len, src.ptr, src.len);
