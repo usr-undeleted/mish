@@ -30,6 +30,8 @@ int unalias_keyword(int argc, char *argv[]);
 
 int return_keyword(int argc, char *argv[]);
 
+int hash_keyword(void);
+
 #define NOT_A_KEYWORD 0
 
 #define EXIT_KEYWORD_S "exit"
@@ -67,5 +69,8 @@ int return_keyword(int argc, char *argv[]);
 
 #define RETURN_KEYWORD_S "return"
 #define RETURN_KEYWORD_N 12
+
+#define HASH_KEYWORD_S "hash"
+#define HASH_KEYWORD_N 13
 
 #endif

@@ -213,4 +213,7 @@ bool determine_quote(const char ch, char *quote_type);
 // libgen's basename
 arg_t arg_basename(const arg_t arg);
 
+// libgen's dirname
+arg_t arg_dirname(const arg_t arg);
+
 #endif

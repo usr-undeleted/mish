@@ -87,6 +87,11 @@ int execute(int argc, char **argv, char **envp, char flags) {
 				break;
 			}
 
+			case HASH_KEYWORD_N: {
+				status = hash_keyword();
+				break;
+			}
+
 			default: {
 				status = INTERNAL_ERR;
 				fprintf(stderr, "%s: unhandled keyword %d (internal).\n",

@@ -1,7 +1,11 @@
 #ifndef PATH_H
 #define PATH_H
 
+#include "hash.h"
 #include "arg.h"
+
+// hash map of everything
+extern hash_map map;
 
 // use to get the stuff from $PATH
 void refresh_path(void);

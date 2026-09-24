@@ -590,3 +590,12 @@ arg_t arg_basename(const arg_t arg) {
 
 	return ret;
 }
+
+arg_t arg_dirname(const arg_t arg) {
+	arg_t ret = arg;
+
+	char *b = arg_r_chr(arg, '/');
+	if (b) ret.len = b - arg.ptr;
+
+	return ret;
+}

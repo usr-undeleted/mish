@@ -133,6 +133,9 @@ int find_keyword(char *str) {
     } else if (!strcmp(str, RETURN_KEYWORD_S)) {
     	return RETURN_KEYWORD_N;
 
+    } else if (!strcmp(str, HASH_KEYWORD_S)) {
+    	return HASH_KEYWORD_N;
+
     } else {
         return NOT_A_KEYWORD;
     }
@@ -496,4 +499,22 @@ int unalias_keyword(int argc, char **argv) {
 
 int return_keyword(int argc, char **argv) {
 	return argc < 2 ? 0 : strtol(argv[1], NULL, 0);
+}
+
+int hash_keyword(void) {
+	bool b = false;
+
+	for (size_t i = 0; i < map.icnt; i++) {
+		if (map.list[i].arg.ptr) {
+			arg_t base = arg_basename(map.list[i].arg);
+			printf("%.*s=\x1b[1m%.*s\x1b[0m\n", (int)base.len, base.ptr,
+				(int)map.list[i].arg.len, map.list[i].arg.ptr);
+			b = true;
+		}
+	}
+
+	if (b == false) printf("<no hashes defined>\n");
+	fflush(stdout);
+
+	return KEY_SUCCESS;
 }
