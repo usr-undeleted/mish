@@ -207,4 +207,7 @@ char *find_closer(arg_t arg, const char open, const char close);
 // returns 1 if the callee should increment their index
 bool determine_quote(const char ch, char *quote_type);
 
+// libgen's basename
+arg_t arg_basename(const arg_t arg);
+
 #endif

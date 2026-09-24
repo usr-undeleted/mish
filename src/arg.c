@@ -173,7 +173,7 @@ inline bool arg_cmp(const arg_t one, const arg_t two) {
 
 // make an arg from just a string
 inline arg_t make_arg(const char *str) {
-    size_t len = strlen(str);
+    size_t len = str ? strlen(str) : 0;
 
     arg_t ret = {
         .ptr = (char *)str,
@@ -243,8 +243,8 @@ inline char *arg_chr(const arg_t arg, const char ch) {
 inline char *arg_r_chr(const arg_t arg, const char ch) {
 	if (!arg.len) return NULL;
 
-	for (size_t i = arg.len - 1; i >= 0; i--) {
-		if (arg.ptr[i] == ch) return arg.ptr + i;
+	for (size_t i = arg.len; i > 0; i--) {
+		if (arg.ptr[i - 1] == ch) return arg.ptr + i - 1;
 	}
 
 	return NULL;
@@ -568,4 +568,19 @@ char *find_closer(arg_t arg, const char open, const char close) {
 	if (depth) return arg_r_chr(arg, close);
 
 	return NULL;
+}
+
+arg_t arg_basename(const arg_t arg) {
+	arg_t ret = arg;
+
+	char *b = arg_r_chr(arg, '/');
+	if (b) {
+		size_t new_l = arg.len - (b - arg.ptr) - (b == arg.ptr ? 0 : 1);
+		size_t new_s = arg.asz - new_l;
+		ret.len = new_l;
+		ret.asz = new_s;
+		ret.ptr = b + 1;
+	}
+
+	return ret;
 }

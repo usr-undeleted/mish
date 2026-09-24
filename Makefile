@@ -2,7 +2,7 @@ CC             ="clang"
 BIN_OUTPUT     ="$(pwd)bin/"
 BIN_NAME       ="mish"
 SRC            ="$(pwd)src"
-CC_FLAGS       ="-Wextra" "-Wall" "-std=gnu99" "-Isrc/"
+CC_FLAGS       ="-Wextra" "-Wall" "-std=gnu99" "-Isrc/" "-DHASH_TYPE=FNV_1A"
 DEBUGGER       =""
 INVOC_ARGS     =""
 

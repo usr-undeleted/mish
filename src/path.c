@@ -7,6 +7,7 @@
 
 #include "path.h"
 #include "envp.h"
+#include "hash.h"
 #include "arg.h"
 
 // how many items to allocate per (re)allocation
@@ -16,15 +17,18 @@
 arg_arr_t known_paths = {0};
 #define LIST_MAX_ITEMS (known_paths.asz / sizeof(arg_t))
 
+// hash map of everything
+hash_map map = {0};
+
 // clear the list
 void clear_list(void) {
     for (size_t i = 0; i < known_paths.icnt; i++) {
         if (!known_paths.ptr[i].ptr) continue;
-        //memset(known_paths.ptr[i].ptr, '\0', known_paths.ptr[i].asz);
         zero_arg(&known_paths.ptr[i]);
     }
 
     known_paths.icnt = 0;
+    free_hash_map(&map);
 }
 
 // free the memory from the list
@@ -35,6 +39,7 @@ void free_path(void) {
     }
 
     free(known_paths.ptr);
+    free_hash_map(&map);
 }
 
 // append a new item to the list
@@ -53,6 +58,9 @@ void append_to_list(const char *path) {
     known_paths.ptr[known_paths.icnt].len = len;
 
     known_paths.icnt++;
+
+    free_hash_map(&map);
+    map = make_hash_map(known_paths, NO_INIT);
 }
 
 // append to list every binary from received directory
@@ -101,11 +109,19 @@ void populate_list(void) {
 void refresh_path(void) {
     clear_list();
     populate_list();
+    free_hash_map(&map);
+    map = make_hash_map(known_paths, NO_INIT);
 }
 
 // get a binary path from a binary name
 char *fetch_from_path(const arg_t bin) {
-    for (size_t i = 0; i < known_paths.icnt; i++) {
+
+	bool put_on_hash = false;
+	arg_t hash_attempt = hash_map_fetch(&map, bin);
+	if (!hash_attempt.ptr) put_on_hash = true;
+	else return hash_attempt.ptr;
+
+	for (size_t i = 0; i < known_paths.icnt; i++) {
         if (!known_paths.ptr[i].ptr) continue;
 
         arg_t comp_arg = known_paths.ptr[i];
@@ -113,7 +129,10 @@ char *fetch_from_path(const arg_t bin) {
         comp_arg.asz   = 0;
         comp_arg.len  -= comp_arg.ptr - known_paths.ptr[i].ptr;
 
-        if (!arg_cmp(comp_arg, bin)) return known_paths.ptr[i].ptr;
+        if (!arg_cmp(comp_arg, bin)) {
+        	if (put_on_hash) hash_map_put(&map, known_paths.ptr[i]);
+        	return known_paths.ptr[i].ptr;
+        }
     }
 
     return NULL;

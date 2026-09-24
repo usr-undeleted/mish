@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <libgen.h>
 
+#include "hash.h"
 #include "parse.h"
 #include "envp.h"
 #include "exec.h"
@@ -63,6 +64,8 @@ int main(int argc, char *argv[], char *envp[]) {
 	// make the envp passed down to children
 	if (make_child_envp((const char **)envp)) return 1;
 	// make $PATH
+	//
+	// hash map is made here too
 	refresh_path();
 
 	// stuff
