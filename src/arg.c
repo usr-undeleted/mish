@@ -6,17 +6,21 @@
 
 #include "arg.h"
 
-// make a new arg, going to the nearest whitespace
-inline arg_t goto_whitespace(const arg_t arg) {
-	arg_t ret = arg;
+// form an index that could be used, for example, to
+// go to whitespace, or encapsulate an arg
+size_t arg_skip_i(const arg_t arg) {
 	char quote_type = NO_QUOTES;
+	bool back = false;
+	size_t ret = 0;
 
-	while (ret.len) {
-		char q = QUOTE_T(*ret.ptr);
+	while (ret < arg.len) {
+		if (back) {
+			back = false;
+			goto end;
+		}
 
-		// as much as i love switches, they'd be
-		// even more indentation hell than what i
-		// already have in here :p
+		char q = QUOTE_T(arg.ptr[ret]);
+
 		if (q != NO_QUOTES) {
 			if (quote_type != NO_QUOTES) {
 				if (quote_type == q) quote_type = NO_QUOTES;
@@ -25,21 +29,44 @@ inline arg_t goto_whitespace(const arg_t arg) {
 				quote_type = q;
 			}
 
-		} else if (*ret.ptr == '\\' && quote_type == NO_QUOTES) {
-			// since we are outside quotes, we
-			// skip a character
-			ret.ptr++;
-			ret.len--;
-			ret.asz--;
+		} else if (arg.ptr[ret] == '\\' && quote_type == NO_QUOTES) {
+			back = true;
 
-		} else if (quote_type == NO_QUOTES && EMPTY_C(*ret.ptr)) break;
+		} else if (arg.ptr[ret] == '$' && quote_type == NO_QUOTES) {
+			ret++;
+			char cl = 0;
 
-		if (!ret.len) break;
+			switch (arg.ptr[ret]) {
+				case '(': {
+					cl = ')';
+					break;
+				}
 
-		ret.ptr++;
-		ret.len--;
-		ret.asz--;
+				default: {
+					--ret;
+					goto end;
+				}
+			}
+
+			while (ret < arg.len && arg.ptr[ret] != cl) ret++;
+
+		} else if (EMPTY_C(arg.ptr[ret]) && quote_type == NO_QUOTES) break;
+
+		end:
+		if (ret >= arg.len) break;
+		ret++;
 	}
+
+	return ret;
+}
+
+// make a new arg, going to the nearest whitespace
+inline arg_t goto_whitespace(const arg_t arg) {
+	arg_t ret = arg;
+	size_t i = arg_skip_i(arg);
+	ret.ptr += i;
+	ret.len -= i;
+	ret.asz -= i;
 
 	return ret;
 }
@@ -60,29 +87,7 @@ inline arg_t skip_whitespace(const arg_t arg) {
 // cap the args length to the nearest whitespace
 inline arg_t cap_to_white(const arg_t arg) {
 	arg_t  ret = arg;
-	size_t i = 0;
-	char quote_type = NO_QUOTES;
-
-	while (i < arg.len) {
-		char q = QUOTE_T(ret.ptr[i]);
-
-		if (q != NO_QUOTES) {
-			if (quote_type != NO_QUOTES) {
-				if (quote_type == q) quote_type = NO_QUOTES;
-
-			} else {
-				quote_type = q;
-			}
-
-		} else if (ret.ptr[i] == '\\' && quote_type == NO_QUOTES) {
-			i++;
-
-		} else if (EMPTY_C(ret.ptr[i]) && quote_type == NO_QUOTES) break;
-
-		if (i >= arg.len) break;
-		i++;
-	}
-
+	size_t i = arg_skip_i(arg);
 	ret.len = i;
 	ret.asz = i;
 
@@ -209,7 +214,7 @@ inline bool arg_cpy(arg_t *dest, const arg_t src) {
 	dest->len = src.len;
 
 	return 0;
-};
+}
 
 // like strchr, but the field is
 // an arg (limits itself to the length)
@@ -482,7 +487,7 @@ char *dblp_get_ptr_c(const dbl_ptr_t arr, const char *label, const char c) {
 	else return NULL;
 }
 
-// sees if an arg is a definition, as in
+// sees if an arg is a definition, as in something like "TEST=blah"
 inline bool arg_is_def(const arg_t arg) {
 	size_t i = 0;
 	char quote_type = NO_QUOTES;

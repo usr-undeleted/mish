@@ -187,6 +187,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 	dest->len = 0;
 
 	char quote_type = NO_QUOTES;
+	bool back = false;
 
 	while (src_i < src.len) {
 		// realloc if needed
@@ -225,6 +226,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 
 			case '\\': {
 				if (quote_type != NO_QUOTES) goto copy_memory;
+				back = true;
 				++src_i;
 
 				goto copy_memory;
@@ -241,21 +243,25 @@ int parse_arg(arg_t *dest, arg_t src) {
 
 			char char_quote = QUOTE_T(src.ptr[src_i]);
 
-			if (char_quote) {
-				if (!quote_type) {
-					// quotes haven't been set
-					quote_type = char_quote;
-					++src_i;
-
-				} else {
-					if (quote_type == char_quote) {
-						quote_type = 0;
+			if (!back) {
+				if (char_quote) {
+					if (!quote_type) {
+						// quotes haven't been set
+						quote_type = char_quote;
 						++src_i;
+
+					} else {
+						if (quote_type == char_quote) {
+							quote_type = 0;
+							++src_i;
+						}
+
 					}
 
+					continue;
 				}
-
-				continue;
+			} else {
+				back = false;
 			}
 
 			dest->ptr[dest->len++] = src.ptr[src_i++];
