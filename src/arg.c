@@ -512,21 +512,15 @@ inline bool arg_is_def(const arg_t arg) {
 	char quote_type = NO_QUOTES;
 
 	while (i < arg.len) {
-		char q = QUOTE_T(arg.ptr[i]);
-
-		if (q != NO_QUOTES) {
-			if (quote_type != NO_QUOTES) {
-				if (quote_type == q) quote_type = NO_QUOTES;
-
-			} else {
-				quote_type = q;
-			}
+		if (determine_quote(arg.ptr[i], &quote_type)) {
+			++i;
 
 		} else if (arg.ptr[i] == '\\' && quote_type == NO_QUOTES) {
-			if (!arg.ptr[++i]) break;
+			if ((i + 1) < arg.len && !arg.ptr[++i]) break;
 
-		} else if (arg.ptr[i] == '=' && i && quote_type == NO_QUOTES) return true;
+		} else if (arg.ptr[i] == '=' && i) return true;
 
+		if (i >= arg.len) break;
 		++i;
 	}
 
