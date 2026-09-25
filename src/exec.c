@@ -150,6 +150,6 @@ int execute(int argc, char **argv, char **envp, char flags) {
 
 	fprintf(stderr, "%s: couldn't execute \"%s\": %s\n",
 		basename(global_argv0), bin_path, strerror(errno));
-   				fflush(stderr);
+   	fflush(stderr);
 	return flags & NO_STATUS ? 0 : INTERNAL_ERR;
 }

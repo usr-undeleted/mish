@@ -36,18 +36,22 @@ uint64_t hash_arg(const arg_t src) {
 hash_pair *hash_map_put(const hash_map *map, const arg_t str) {
 	if (!map) return NULL;
 	uint64_t hash = hash_arg(arg_basename(str));
+	size_t i = hash % map->icnt;
 
-	while (map->list[hash % map->icnt].arg.ptr && map->list[hash % map->icnt].hash == hash) {
-		hash++;
+	while (map->list[i].arg.ptr
+		&& map->list[i].hash == hash
+		&& arg_cmp(map->list[i].arg, str)) {
+			hash++;
+			i = hash % map->icnt;
 	}
 
-	if (map->list[hash % map->icnt].arg.ptr) return NULL;
+	if (map->list[i].arg.ptr) return NULL;
 	else {
-		map->list[hash % map->icnt].hash = hash;
-		map->list[hash % map->icnt].arg  = str;
+		map->list[i].hash = hash;
+		map->list[i].arg  = str;
 	}
 
-	return &map->list[hash % map->icnt];
+	return &map->list[i];
 }
 
 hash_map make_hash_map(const arg_arr_t list, const hash_flag flag) {
@@ -72,15 +76,17 @@ arg_t hash_map_fetch(hash_map *map, const arg_t str) {
 	if (!map || !map->icnt) return ret;
 
 	uint64_t hash = hash_arg(str);
+	size_t i = hash % map->icnt;
 
-	while (arg_cmp(str, arg_basename(map->list[hash % map->icnt].arg))) {
-		if (!map->list[hash % map->icnt].arg.ptr
-			|| map->list[hash % map->icnt].hash != hash) return ret;
+	while (arg_cmp(str, arg_basename(map->list[i].arg))) {
+		if (!map->list[i].arg.ptr
+			|| map->list[i].hash != hash) return ret;
 
 		hash++;
+		i = hash % map->icnt;
 	}
 
-	ret = map->list[hash % map->icnt].arg;
+	ret = map->list[i].arg;
 	return ret;
 }
 
