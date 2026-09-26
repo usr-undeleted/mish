@@ -49,7 +49,7 @@ int read_fd_line(arg_t *dest, int fd) {
 		if (ch == '\n') nl = true;
 
 		dest->ptr[i++] = nl == true ? '\0' : ch;
-		dest->len++;
+		dest->len += 1 - nl;
 
 		if (nl == true) break;
 	}

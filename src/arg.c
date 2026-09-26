@@ -46,16 +46,16 @@ size_t arg_skip_i(const arg_t arg) {
 
 		} else if (arg.ptr[ret] == '$' && quote_type == NO_QUOTES) {
 			ret++;
-			char cl = 0;
+			char *cl = NULL;
 
 			switch (arg.ptr[ret]) {
 				case '(': {
-					cl = ')';
+					cl = find_closer(shift_arg(arg, ret), '(', ')');
 					break;
 				}
 
 				case '[': {
-					cl = ']';
+					cl = find_closer(shift_arg(arg, ret), '[', ']');
 					break;
 				}
 
@@ -65,9 +65,16 @@ size_t arg_skip_i(const arg_t arg) {
 				}
 			}
 
-			while (ret < arg.len && arg.ptr[ret] != cl) ret++;
+			if (!cl) {
+				--ret;
+				goto end;
+			}
 
-		} else if (EMPTY_C(arg.ptr[ret]) && quote_type == NO_QUOTES) break;
+			while (ret < arg.len && (&arg.ptr[ret]) != cl) ret++;
+
+		}
+
+		if (EMPTY_C(arg.ptr[ret]) && quote_type == NO_QUOTES) break;
 
 		end:
 		if (ret >= arg.len) break;
@@ -285,7 +292,7 @@ inline arg_t shift_arg_c(arg_t arg, const char c) {
 inline void idx_to_white(size_t *i, const arg_t arg) {
 	if (!i) return;
 
-	while (*i < arg.len && !EMPTY_C(arg.ptr[*i])) (*i)++;
+	*i = arg_skip_i(arg);
 }
 
 // an idx may be at the end of the list or

@@ -22,13 +22,12 @@
 // 1. replacing the immediate first argument with an alias
 // 2. (to be added) globbing files
 // 3. consuming args that are DEFS=something
-int remake_arg(arg_t *dest, const arg_t src) {
+bool remake_arg(arg_t *dest, const arg_t src) {
 	if (!dest) return 1;
 	dest->len = 0;
 	size_t src_i = 0;
 
 	bool aliased = false;
-	bool not_def = false;
 
 	while (src_i < src.len) {
 		// realloc if needed
@@ -37,35 +36,6 @@ int remake_arg(arg_t *dest, const arg_t src) {
 		}
 
 		arg_t arg = cap_to_white(shift_arg(src, src_i));
-
-		// arg is something like DEFINE=SOMETHING
-		if (not_def == false && arg_is_def(arg)) {
-			char *eq = arg_chr(arg, '=');
-			if (!eq) {
-				not_def = true;
-				goto skip;
-			}
-
-			// make the two strings
-			char *b = calloc(1, arg.len + 1);
-			if (!b) return 1;
-			memcpy(b, arg.ptr, arg.len);
-
-			// make the two strings
-			b[eq - arg.ptr] = '\0';
-			char *label = b;
-			char   *val = &b[eq - arg.ptr + 1];
-
-			shell_set_env(label, val);
-			if (!strcmp(label, "PATH")) refresh_path();
-
-			free(b);
-			skip: {
-				idx_to_white(&src_i, src);
-				continue;
-			}
-
-		} else not_def = true;
 
 		// aliases
 		if (aliased == false && !EMPTY_C(src.ptr[src_i])) {
@@ -172,7 +142,7 @@ char *expand_cmd(const char *src) {
 // if it fails to expand, return 1
 //
 // src is expected to be at dollar sign
-bool expand(arg_t *dest, const arg_t src, size_t *src_i, char *quote_type) {
+bool expand(arg_t *dest, const arg_t src, size_t *src_i) {
 	if (src.ptr[*src_i] != '$') return 1;
 
 	// skip dollar sign
@@ -223,33 +193,25 @@ bool expand(arg_t *dest, const arg_t src, size_t *src_i, char *quote_type) {
 	char *content = NULL;
 
 	// make the string for comparisons
-	char *comp = calloc(sizeof(char), src.len - 2);
-	if (!comp) return 1;
-	size_t c_src_i = 0, c_dest_i = 0;
 
-	while (1) {
-		if (determine_quote(start[c_src_i], quote_type)) ++c_src_i;
-
-		if (!start[c_src_i]) break;
-		comp[c_dest_i++] = start[c_src_i++];
-	}
-
+	arg_t comp = {0};
+	if (parse_arg(&comp, make_arg(start)) != 0) return 1;
 
 	switch (op) {
 		case '(': {
 			// env vars
-			content = shell_get_env(comp);
+			content = shell_get_env(comp.ptr);
 			break;
 		}
 
 		case '[': {
 			// command expansion
-			content = expand_cmd(comp);
+			content = expand_cmd(comp.ptr);
 			break;
 		}
 	}
 
-	free(comp);
+	free_arg(&comp);
 
 	// wasnt found
 	if (!content) {
@@ -274,7 +236,9 @@ bool expand(arg_t *dest, const arg_t src, size_t *src_i, char *quote_type) {
 }
 
 // form an arg, allocating memory automatically
-int parse_arg(arg_t *dest, arg_t src) {
+//
+// return 1 on errors
+bool parse_arg(arg_t *dest, arg_t src) {
 	if (!dest) return 1;
 	free_arg(dest);
 	size_t src_i  = 0;
@@ -293,7 +257,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 			// stuff like env vars
 			case '$': {
 				if (quote_type == QUOTE_SIN) goto copy_memory;
-				if (expand(dest, src, &src_i, &quote_type) != 0) goto copy_memory;
+				if (expand(dest, src, &src_i) != 0) goto copy_memory;
 
 				continue;
 			}
@@ -335,25 +299,9 @@ int parse_arg(arg_t *dest, arg_t src) {
 		copy_memory: {
 			if (src_i >= src.len) break;
 
-			char char_quote = QUOTE_T(src.ptr[src_i]);
+			if (!back && determine_quote(src.ptr[src_i], &quote_type)) {
+				++src_i;
 
-			if (!back) {
-				if (char_quote) {
-					if (!quote_type) {
-						// quotes haven't been set
-						quote_type = char_quote;
-						++src_i;
-
-					} else {
-						if (quote_type == char_quote) {
-							quote_type = 0;
-							++src_i;
-						}
-
-					}
-
-					continue;
-				}
 			} else {
 				back = false;
 			}
@@ -363,7 +311,7 @@ int parse_arg(arg_t *dest, arg_t src) {
 	}
 
 	// null term
-	if (dest->len > dest->asz) {
+	if (dest->len > dest->asz || !dest->ptr) {
 		if (alloc_arg(dest, 1) != 0) return 1;
 	}
 	dest->ptr[dest->len] = '\0';
@@ -375,7 +323,8 @@ int parse_arg(arg_t *dest, arg_t src) {
 bool make_child_argv(const arg_t arg, arg_arr_t *child_argv, int *child_argc, size_t asz) {
 	if (!child_argv || !child_argc) return 1;
 
-	arg_t work = arg;
+	arg_t    work = arg;
+	bool def_able = true;
 
 	while (work.len) {
 		if ((size_t)(*child_argc + 1) >= (child_argv->asz / sizeof(arg_t))) {
@@ -394,6 +343,27 @@ bool make_child_argv(const arg_t arg, arg_arr_t *child_argv, int *child_argc, si
 		if (arg_empty(child_argv->ptr[*child_argc])) {
 			goto skip;
 		}
+
+		// definitions get skipped and used up
+		if (arg_is_def(child_argv->ptr[*child_argc]) && def_able) {
+			char *eq = arg_chr(child_argv->ptr[*child_argc], '=');
+			if (!eq) goto skip;
+
+			// make the two strings
+			char *b = calloc(1, child_argv->ptr[*child_argc].len + 1);
+			if (!b) return 1;
+			memcpy(b, child_argv->ptr[*child_argc].ptr, child_argv->ptr[*child_argc].len);
+
+			// make the two strings
+			b[eq - child_argv->ptr[*child_argc].ptr] = '\0';
+			char *label = b;
+			char   *val = &b[eq - child_argv->ptr[*child_argc].ptr + 1];
+
+			shell_set_env(label, val);
+			if (!strcmp(label, "PATH")) refresh_path();
+
+			goto skip;
+		} else def_able = false;
 
 		(*child_argc)++;
 
