@@ -296,18 +296,17 @@ bool parse_arg(arg_t *dest, arg_t src) {
 			}
 		}
 
-		copy_memory: {
-			if (src_i >= src.len) break;
+		copy_memory:
+		if (src_i >= src.len) break;
 
-			if (!back && determine_quote(src.ptr[src_i], &quote_type)) {
-				++src_i;
+		if (!back && determine_quote(src.ptr[src_i], &quote_type)) {
+			++src_i;
 
-			} else {
-				back = false;
-			}
-
-			dest->ptr[dest->len++] = src.ptr[src_i++];
+		} else {
+			back = false;
 		}
+
+		dest->ptr[dest->len++] = src.ptr[src_i++];
 	}
 
 	// null term
