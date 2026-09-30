@@ -9,12 +9,13 @@
 #include <stdio.h>
 #include <libgen.h>
 
-#include "hash.h"
 #include "keyword.h"
+#include "prompt.h"
 #include "parse.h"
 #include "envp.h"
 #include "exec.h"
 #include "path.h"
+#include "hash.h"
 #include "arg.h"
 
 // TODO: globbin' (globbing, if you don't like having fun...)
@@ -79,11 +80,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	// main loop
 	while (1) {
-		if (status) {
-			printf("(%d)> ", status % 255);
-		} else {
-			printf("> ");
-		}
+		print_prompt();
 
 		status = 0;
 		fflush(stdout);
@@ -126,6 +123,10 @@ int main(int argc, char *argv[], char *envp[]) {
 			// yes, i know this isn't the right thing...
 			if (!isatty(STDIN_FILENO)) break;
 		}
+
+		char s[16] = {0};
+		snprintf(s, sizeof(s) - 1, "%d", status);
+		shell_set_env("$", s);
 	}
 
 	free_arg_arr(&child_argv);
