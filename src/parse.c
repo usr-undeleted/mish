@@ -195,7 +195,7 @@ bool expand(arg_t *dest, const arg_t src, size_t *src_i) {
 	// make the string for comparisons
 
 	arg_t comp = {0};
-	if (parse_arg(&comp, make_arg(start)) != 0) return 1;
+	if (parse_arg(&comp, make_arg(start), 0) != 0) return 1;
 
 	switch (op) {
 		case '(': {
@@ -238,7 +238,10 @@ bool expand(arg_t *dest, const arg_t src, size_t *src_i) {
 // form an arg, allocating memory automatically
 //
 // return 1 on errors
-bool parse_arg(arg_t *dest, arg_t src) {
+//
+// f field adds extra functionality (that acts independent of quote):
+// - turning escape characters into their counterparts
+bool parse_arg(arg_t *dest, arg_t src, bool f) {
 	if (!dest) return 1;
 	free_arg(dest);
 	size_t src_i  = 0;
@@ -246,6 +249,7 @@ bool parse_arg(arg_t *dest, arg_t src) {
 
 	char quote_type = NO_QUOTES;
 	bool back = false;
+	bool  esc = false;
 
 	while (src_i < src.len) {
 		// realloc if needed
@@ -283,6 +287,7 @@ bool parse_arg(arg_t *dest, arg_t src) {
 			}
 
 			case '\\': {
+				if (f) esc = true;
 				if (quote_type != NO_QUOTES) goto copy_memory;
 				back = true;
 				++src_i;
@@ -299,8 +304,22 @@ bool parse_arg(arg_t *dest, arg_t src) {
 		copy_memory:
 		if (src_i >= src.len) break;
 
+		if (esc) {
+			esc = false;
+
+			switch (src.ptr[src_i]) {
+				case 'e': {
+					dest->ptr[dest->len++] = '\x1b';
+					++src_i;
+					continue;
+					break;
+				}
+			}
+		}
+
 		if (!back && determine_quote(src.ptr[src_i], &quote_type)) {
 			++src_i;
+			continue;
 
 		} else {
 			back = false;
@@ -336,7 +355,7 @@ bool make_child_argv(const arg_t arg, arg_arr_t *child_argv, int *child_argc, si
 		arg_t cmd_arg = cap_to_white(work);
 		if (arg_empty(cmd_arg)) break;
 
-		if (parse_arg(&child_argv->ptr[*child_argc], cmd_arg) != 0) return 1;
+		if (parse_arg(&child_argv->ptr[*child_argc], cmd_arg, 0) != 0) return 1;
 
 		// end early if fully empty stuff
 		if (arg_empty(child_argv->ptr[*child_argc])) {

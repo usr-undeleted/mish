@@ -12,7 +12,7 @@ void print_prompt(void) {
 	}
 
 	arg_t final = {0};
-	if (parse_arg(&final, make_arg(prompt)) != 0) return;
+	if (parse_arg(&final, make_arg(prompt), true) != 0) return;
 
 	printf("%.*s", (int)final.len, final.ptr);
 }

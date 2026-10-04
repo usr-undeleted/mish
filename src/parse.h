@@ -16,6 +16,6 @@ bool remake_arg(arg_t *dest, const arg_t src);
 bool make_child_argv(const arg_t arg, arg_arr_t *child_argv, int *child_argc, size_t asz);
 
 // parse an arg
-bool parse_arg(arg_t *dest, arg_t src);
+bool parse_arg(arg_t *dest, arg_t src, bool f);
 
 #endif
